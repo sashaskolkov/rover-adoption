@@ -14,7 +14,7 @@
   --line:#EBE9E5;
   --dark:#18171A;
   --radius:20px;
-  --sheet-collapsed:min(258px,34vh);
+  --sheet-collapsed:min(276px,36vh);
   --sheet-expanded:min(648px,80vh);
   --tabbar-h:82px;
   --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter","Helvetica Neue",Arial,sans-serif;
@@ -97,7 +97,12 @@ body.dark-status .statusbar{color:#fff}
   display:flex;align-items:center;justify-content:center;
   box-shadow:0 4px 14px rgba(0,0,0,.22),0 0 0 3px #fff;
 }
-.rv-marker.mine .rv-bubble{box-shadow:0 6px 20px rgba(0,0,0,.28),0 0 0 4px var(--y)}
+.rv-marker.is-on .rv-bubble{box-shadow:0 6px 20px rgba(0,0,0,.3),0 0 0 4px var(--ink)}
+.rv-marker.mine .rv-bubble,
+.rv-marker.mine.is-on .rv-bubble{box-shadow:0 6px 20px rgba(0,0,0,.28),0 0 0 4px var(--y)}
+/* позиция обновляется раз в 200 мс — доводим её анимацией, чтобы ехало плавно */
+.leaflet-marker-icon{transition:transform .2s linear}
+.leaflet-zoom-anim .leaflet-marker-icon,.leaflet-pan-anim .leaflet-marker-icon{transition:none}
 .rv-label{
   margin-top:-6px;background:var(--ink);color:#fff;font-size:12.5px;font-weight:700;
   padding:3px 9px;border-radius:9px;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,.25);
@@ -122,7 +127,10 @@ body.dark-status .statusbar{color:#fff}
 .map-title{
   background:rgba(255,255,255,.94);backdrop-filter:blur(14px);
   border-radius:16px;padding:7px 18px;text-align:center;box-shadow:0 4px 18px rgba(0,0,0,.12);
+  transition:transform .15s;max-width:210px;
 }
+.map-title:active{transform:scale(.95)}
+.mt-value{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mt-label{display:block;font-size:11px;color:var(--ink-3);font-weight:600;letter-spacing:.02em}
 .mt-value{display:block;font-size:16px;font-weight:800;margin-top:-1px}
 .round-btn{
@@ -140,25 +148,9 @@ body.dark-status .statusbar{color:#fff}
 .round-btn .badge[hidden]{display:none}
 .map-side{position:absolute;right:14px;z-index:30;bottom:calc(var(--sheet-collapsed) + 14px);display:flex;flex-direction:column;gap:10px}
 
-/* чипсы роверов */
-.chips{
-  position:absolute;left:0;right:0;z-index:30;bottom:calc(var(--sheet-collapsed) + 14px);
-  display:flex;gap:9px;overflow-x:auto;padding:0 14px;scrollbar-width:none;
-  -webkit-mask-image:linear-gradient(90deg,transparent,#000 14px,#000 calc(100% - 60px),transparent);
-}
-.chips::-webkit-scrollbar{display:none}
 /* при раскрытой шторке карта почти не видна — убираем лишнее */
-.chips,.map-side{transition:opacity .25s}
-.chips.hide,.map-side.hide{opacity:0;pointer-events:none}
-.chip{
-  flex:none;width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);
-  display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.14);
-  border:2.5px solid transparent;transition:transform .15s,border-color .2s;position:relative;
-}
-.chip svg{width:38px;height:38px}
-.chip.is-on{border-color:var(--y);transform:scale(1.06)}
-.chip.mine:after{content:"";position:absolute;bottom:2px;right:2px;width:12px;height:12px;border-radius:50%;background:var(--y);border:2px solid #fff}
-.chip:active{transform:scale(.93)}
+.map-side{transition:opacity .25s}
+.map-side.hide{opacity:0;pointer-events:none}
 
 /* ---------- bottom sheet ---------- */
 .sheet{
@@ -174,14 +166,17 @@ body.dark-status .statusbar{color:#fff}
 .sheet-grab i{width:38px;height:5px;border-radius:3px;background:#D9D6D0;display:block}
 .sheet-head{display:flex;align-items:center;gap:12px;padding:4px 18px 12px;flex:none}
 .rover-ava{
-  width:60px;height:60px;border-radius:18px;background:var(--bg);flex:none;
+  width:64px;height:64px;border-radius:18px;background:var(--bg);flex:none;
   display:flex;align-items:center;justify-content:center;overflow:hidden;
 }
-.rover-ava svg{width:56px;height:auto}
+.rover-ava svg{width:60px;height:auto}
 .sheet-id{flex:1;min-width:0}
-.sheet-id h2{margin:0;font-size:23px;font-weight:800;letter-spacing:-.02em}
-.sheet-id p{margin:2px 0 0;font-size:13.5px;color:var(--ink-3);font-weight:500;
+.sheet-id h2{margin:0;font-size:22px;font-weight:800;letter-spacing:-.02em;line-height:1.15}
+.sheet-id p{margin:1px 0 0;font-size:13px;color:var(--ink-3);font-weight:500;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* серийный номер — моноширинный, как на шильдике */
+.sheet-sn{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px!important;
+  letter-spacing:.02em;color:var(--ink-3);opacity:.85}
 .mood{background:var(--bg);border-radius:14px;padding:7px 11px;text-align:center;flex:none}
 .mood-emoji{display:block;font-size:14px}
 .mood-val{display:block;font-size:13px;font-weight:800;margin-top:1px}
@@ -219,12 +214,16 @@ body.dark-status .statusbar{color:#fff}
 .section-title{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin:0 0 10px;padding:0 2px}
 .section-title.light{color:#7C7A88;padding:0 18px;margin-top:26px}
 
-.nearby{display:flex;gap:9px;overflow-x:auto;margin:0 -14px 18px;padding:0 14px 2px;scrollbar-width:none}
-.nearby::-webkit-scrollbar{display:none}
-.nb{flex:none;width:96px;background:var(--bg);border-radius:16px;padding:10px 8px;text-align:center}
-.nb svg{width:56px;height:auto}
-.nb b{display:block;font-size:13px;font-weight:800;margin-top:2px}
-.nb span{display:block;font-size:10.5px;color:var(--ink-3);font-weight:600}
+/* соседние роверы — списком: сами они видны на карте, дублировать их
+   отдельной каруселью кружков не нужно */
+.nearby{background:var(--bg);border-radius:16px;overflow:hidden;margin-bottom:18px}
+.nb{display:flex;width:100%;align-items:center;justify-content:space-between;gap:10px;
+  padding:11px 14px;text-align:left;border-bottom:1px solid rgba(0,0,0,.05)}
+.nb:last-child{border-bottom:0}
+.nb:active{background:#EDEBE6}
+.nb-id b{display:block;font-size:14px;font-weight:700;letter-spacing:-.01em}
+.nb-id span{display:block;font-size:11.5px;color:var(--ink-3);font-weight:600;margin-top:1px}
+.nb-d{flex:none;font-size:13px;font-weight:700;color:var(--ink-2);font-variant-numeric:tabular-nums}
 
 .promo{
   display:flex;align-items:center;gap:10px;background:var(--y);border-radius:20px;

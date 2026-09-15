@@ -5,6 +5,8 @@
 const $  = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
+const T0 = Date.now();          // момент запуска: от него считаем разряд батареи
+
 /* ---------- состояние ---------- */
 const DEFAULT_STATE = {
   skin: 'classic',
@@ -41,13 +43,24 @@ function toast(msg, ms = 2400) {
 function haptic(pattern = 12) { if (navigator.vibrate) try { navigator.vibrate(pattern); } catch {} }
 function fmtNum(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function fmtKmh(v) { return v.toFixed(1).replace('.', ',') + ' км/ч'; }
 
 /* расстояние между координатами, м */
 function distM(a, b) {
   const R = 6371000, toR = d => d * Math.PI / 180;
   const dLat = toR(b[0] - a[0]), dLon = toR(b[1] - a[1]);
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(toR(a[0])) * Math.cos(toR(b[0])) * Math.sin(dLon / 2) ** 2;
-  return Math.round(2 * R * Math.asin(Math.sqrt(h)));
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+function fmtDist(d) {
+  return d >= 950 ? (d / 1000).toFixed(1).replace('.', ',') + ' км' : Math.round(d) + ' м';
+}
+
+/* Заряд садится ровно и предсказуемо: 1% примерно за три минуты,
+   то есть полная смена ровера — около пяти часов. */
+function battOf(r) {
+  const spent = (Date.now() - T0) / 1000 / 180;
+  return Math.max(8, Math.round(r.batt - spent));
 }
 
 /* короткий «бип» ровера */
@@ -77,6 +90,46 @@ function tickClock() {
 tickClock(); setInterval(tickClock, 20000);
 
 /* ============================================================
+   ДВИЖЕНИЕ ПО МАРШРУТУ
+
+   Маршрут — полилиния из OpenStreetMap (js/routes.js). Ровер едет
+   по ней в метрах, а не в градусах: положение задаётся пройденным
+   путём s вдоль маршрута. Поэтому скорость честно равна r.kmh
+   и не зависит от того, длинный сегмент или короткий.
+   ============================================================ */
+const TICK_MS = 200;
+
+function initRoute(r) {
+  r.route = ROUTES[r.id];
+  r.segLen = [];
+  for (let i = 0; i < r.route.length - 1; i++) r.segLen.push(distM(r.route[i], r.route[i + 1]));
+  r.total = r.segLen.reduce((a, b) => a + b, 0);
+  r.s = r.t * r.total;
+  placeRover(r);
+}
+
+function placeRover(r) {
+  let s = ((r.s % r.total) + r.total) % r.total, i = 0;
+  while (i < r.segLen.length - 1 && s >= r.segLen[i]) { s -= r.segLen[i]; i++; }
+  const a = r.route[i], b = r.route[i + 1];
+  const f = r.segLen[i] > 0 ? Math.min(1, s / r.segLen[i]) : 0;
+  r.pos = [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
+}
+
+let lastTick = performance.now();
+function driveAll() {
+  const now = performance.now();
+  // после сна вкладки не даём роверам телепортироваться вперёд
+  const dt = Math.min(2000, now - lastTick) / 1000;
+  lastTick = now;
+  ROVERS.forEach(r => {
+    r.s += r.kmh * 1000 / 3600 * dt;
+    placeRover(r);
+    if (markers[r.id]) markers[r.id].setLatLng(r.pos);
+  });
+}
+
+/* ============================================================
    КАРТА
    ============================================================ */
 let map, markers = {}, meMarker;
@@ -95,34 +148,34 @@ function initMap() {
   }).addTo(map);
 
   ROVERS.forEach(r => {
-    r.route = ROUTES[r.id];
-    r.seg = Math.floor(r.t * (r.route.length));
-    r.f = 0;
-    r.pos = r.route[r.seg].slice();
-    const m = L.marker(r.pos, {
-      icon: roverIcon(r), zIndexOffset: r.mine ? 1000 : 0
-    }).addTo(map);
+    initRoute(r);
+    const m = L.marker(r.pos, { icon: roverIcon(r), zIndexOffset: r.mine ? 1000 : 0 }).addTo(map);
     m.on('click', () => selectRover(r.id));
     markers[r.id] = m;
   });
 
-  requestAnimationFrame(loop);
+  setInterval(driveAll, TICK_MS);
+  setInterval(refreshSheetMeta, 1000);
   setTimeout(() => focusRover(me(), false), 300);
 }
 
-/* центрируем ровера так, чтобы он не уехал под шторку */
+/* Центрируем ровера в той полосе карты, которую не закрывает шторка:
+   сдвиг считаем от её фактической высоты, иначе при раскрытой шторке
+   ровер оказывается прямо под ней. */
 function focusRover(r, animate = true) {
   if (!r || !r.pos) return;
+  const h = map.getSize().y;
+  const visible = Math.max(120, h - sheet.offsetHeight);
   const z = map.getZoom();
   const p = map.project(r.pos, z);
-  p.y += 92;
+  p.y += h / 2 - visible / 2 - 8;
   map.panTo(map.unproject(p, z), { animate, duration: .5 });
 }
 
 function roverIcon(r) {
   return L.divIcon({
     className: '',
-    html: `<div class="rv-marker ${r.mine ? 'mine' : ''}" data-rv="${r.id}">
+    html: `<div class="rv-marker ${r.mine ? 'mine' : ''} ${r.id === selectedId ? 'is-on' : ''}" data-rv="${r.id}">
              <div class="rv-ring"></div>
              <div class="rv-bubble">${roverPin(r.mine ? S.skin : r.skin)}</div>
              <div class="rv-label">${r.name}</div>
@@ -131,57 +184,31 @@ function roverIcon(r) {
   });
 }
 
-/* движение по маршруту */
-let last = 0;
-function loop(ts) {
-  const dt = Math.min(64, ts - last || 16); last = ts;
-  ROVERS.forEach(r => {
-    const route = r.route;
-    const a = route[r.seg % route.length];
-    const b = route[(r.seg + 1) % route.length];
-    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
-    r.f += (r.speed * dt / 16) / len;
-    while (r.f >= 1) { r.f -= 1; r.seg = (r.seg + 1) % route.length; }
-    const a2 = route[r.seg % route.length], b2 = route[(r.seg + 1) % route.length];
-    r.pos = [a2[0] + (b2[0] - a2[0]) * r.f, a2[1] + (b2[1] - a2[1]) * r.f];
-    markers[r.id].setLatLng(r.pos);
-  });
-  if (++loop.n % 30 === 0) refreshSheetMeta();
-  requestAnimationFrame(loop);
-}
-loop.n = 0;
-
-function repaintMarker(id) {
-  const r = byId(id);
-  markers[id].setIcon(roverIcon(r));
+function repaintMarkers() {
+  ROVERS.forEach(r => markers[r.id] && markers[r.id].setIcon(roverIcon(r)));
 }
 
 /* ============================================================
-   ЧИПСЫ + ШТОРКА
+   ШТОРКА
    ============================================================ */
-function renderChips() {
-  $('#chips').innerHTML = ROVERS.map(r => `
-    <button class="chip ${r.mine ? 'mine' : ''} ${r.id === selectedId ? 'is-on' : ''}" data-rv="${r.id}">
-      ${roverPin(r.mine ? S.skin : r.skin)}
-    </button>`).join('');
-}
-
 function selectRover(id) {
+  const changed = selectedId !== id;
   selectedId = id;
   haptic(8);
-  renderChips();
+  repaintMarkers();
   renderSheet();
   focusRover(byId(id));
-  $('#answer').hidden = true;
+  if (changed) $('#answer').hidden = true;
 }
 
 function renderSheet() {
   const r = byId(selectedId);
   const skin = r.mine ? S.skin : r.skin;
-  $('#sheetAva').innerHTML = roverSVG(skin, { size: 62, flat: true });
+  $('#sheetAva').innerHTML = roverSVG(skin, { size: 64, flat: true });
   $('#sheetName').textContent = r.name;
-  $('#mapTitleName').textContent = r.mine ? r.name : `${r.name} · ${r.owner}`;
-  $('#mapTitleName').previousElementSibling.textContent = r.mine ? 'Мой ровер' : 'Чужой ровер';
+  $('#sheetSn').textContent = 'S/N ' + r.sn;
+  $('#mapTitleName').textContent = r.name;
+  $('#mapTitleLabel').textContent = r.mine ? 'Мой ровер' : 'Ровер · опекун ' + r.owner;
 
   const mine = r.mine;
   $('#btnHow').disabled = !mine;
@@ -189,11 +216,12 @@ function renderSheet() {
   $('#btnPhoto').disabled = !mine;
   $('#promoWardrobe').style.display = mine ? '' : 'none';
 
-  $('#stOrders').textContent = mine ? 37 : 12 + (r.name.length * 3);
+  $('#stOrders').textContent = mine ? 37 : 12 + r.name.length * 3;
   $('#stKm').textContent = mine ? '18,4' : (6 + r.name.length).toFixed(1).replace('.', ',');
   $('#stDays').textContent = mine ? 126 : 40 + r.name.length * 7;
-  $$('.stat span')[2].textContent = mine ? 'дней с вами' : `дней с ${r.owner}`;
+  $$('.stat span')[2].textContent = mine ? 'дней с вами' : 'дней у опекуна';
 
+  $('#promoPodSub').textContent = `Новый выпуск: «${EPISODES[0].title}»`;
   $('#promoArt').innerHTML = roverSVG(S.skin, { size: 78, flat: true });
   $('#promoWardrobe').querySelector('span').textContent =
     `${SKINS.length - S.owned.length} скинов ждут · у вас ${fmtNum(S.coins)} ⚙️`;
@@ -206,15 +234,28 @@ function refreshSheetMeta() {
   const r = byId(selectedId);
   if (!r || !r.pos) return;
   const d = distM(HOME, r.pos);
-  const dTxt = d > 950 ? (d / 1000).toFixed(1).replace('.', ',') + ' км' : d + ' м';
-  $('#sheetSub').textContent = `${r.plate} · ${r.mine ? 'в пути' : 'опекун: ' + r.owner} · ${dTxt} от вас`;
-  const batt = 55 + Math.round(35 * Math.abs(Math.sin(r.seg + r.f)));
-  $('#sheetMood').querySelector('.mood-val').textContent = batt + '%';
+  // «в пути» опускаем — строка иначе не влезает и обрезается многоточием
+  $('#sheetSub').textContent = `${fmtKmh(r.kmh)} · ${fmtDist(d)} от вас`;
+  $('#sheetMood').querySelector('.mood-val').textContent = battOf(r) + '%';
 
-  // пуш, когда мой ровер подъехал близко
-  if (r.mine && !S.pushSeen && d < 260 && $('.screen.is-active').dataset.screen === 'map') {
+  // Обновляем расстояния в списке «рядом» и переставляем строки по порядку.
+  // Двигаем существующие узлы, а не перерисовываем список — иначе он мигает.
+  const box = $('#nearby');
+  $$('#nearby .nb')
+    .map(el => {
+      const x = byId(el.dataset.rv);
+      const d = x && x.pos ? distM(r.pos, x.pos) : Infinity;
+      el.querySelector('.nb-d').textContent = fmtDist(d);
+      return { el, d };
+    })
+    .sort((a, b) => a.d - b.d)
+    .forEach(({ el }) => box.appendChild(el));
+
+  // пуш, когда мой ровер подъехал близко (но не в первые секунды показа)
+  if (r.mine && !S.pushSeen && d < 260 && Date.now() - T0 > 20000
+      && $('.screen.is-active').dataset.screen === 'map') {
     S.pushSeen = true; save();
-    setTimeout(() => showPush(0), 800);
+    showPush(0);
   }
 }
 
@@ -222,12 +263,16 @@ function renderNearby() {
   const r = byId(selectedId);
   const others = ROVERS.filter(x => x.id !== r.id)
     .map(x => ({ x, d: distM(r.pos || HOME, x.pos || HOME) }))
-    .sort((a, b) => a.d - b.d).slice(0, 5);
+    .sort((a, b) => a.d - b.d).slice(0, 4);
+  // без падежей: «Рядом с Пика Пика» звучало бы коряво
+  $('#nearbyTitle').textContent = 'Роверы рядом';
   $('#nearby').innerHTML = others.map(({ x, d }) => `
     <button class="nb" data-rv="${x.id}">
-      ${roverPin(x.mine ? S.skin : x.skin)}
-      <b>${x.name}</b>
-      <span>${d > 950 ? (d / 1000).toFixed(1).replace('.', ',') + ' км' : d + ' м'}</span>
+      <span class="nb-id">
+        <b>${x.name}</b>
+        <span>${x.mine ? 'ваш ровер' : 'опекун: ' + x.owner}</span>
+      </span>
+      <span class="nb-d">${fmtDist(d)}</span>
     </button>`).join('');
 }
 
@@ -235,7 +280,6 @@ function renderNearby() {
 const sheet = $('#sheet');
 function setSheet(expanded) {
   sheet.classList.toggle('expanded', expanded);
-  $('#chips').classList.toggle('hide', expanded);
   $('.map-side').classList.toggle('hide', expanded);
 }
 setSheet(false);
@@ -255,7 +299,7 @@ setSheet(false);
   grab.addEventListener('mousedown', start); grab.addEventListener('mouseup', end);
   grab.addEventListener('touchstart', start, { passive: true });
   grab.addEventListener('touchend', end);
-  $('#sheet').addEventListener('click', e => {
+  sheet.addEventListener('click', e => {
     if (e.target.closest('.sheet-head') && !sheet.classList.contains('expanded')) setSheet(true);
   });
 })();
@@ -314,7 +358,7 @@ function openPhoto() {
 
 function showShot(idx, fresh) {
   const now = new Date();
-  const stamp = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} · A-1856`;
+  const stamp = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} · ${me().plate}`;
   modal(`
     <h3 class="mc-title">${fresh ? 'Кадр дня' : 'Последний кадр'}</h3>
     <p class="mc-sub">Снято камерой Семёна, ${now.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</p>
@@ -367,9 +411,9 @@ function renderWardrobe() {
   }).join('');
 
   const sk = SKINS.find(s => s.id === selectedSkin);
-  $('#previewArt').innerHTML = roverSVG(selectedSkin, { size: 216, plate: 'A-1856' });
+  $('#previewArt').innerHTML = roverSVG(selectedSkin, { size: 216, plate: me().plate });
   $('#previewName').textContent = sk.name;
-  $('#previewArt').nextElementSibling.nextElementSibling.textContent = sk.desc;
+  $('#previewHint').textContent = sk.desc;
 
   const own = S.owned.includes(selectedSkin);
   const btn = $('#btnEquip');
@@ -401,7 +445,7 @@ $('#btnEquip').onclick = () => {
     return;
   }
   modal(`
-    <div class="mc-art">${roverSVG(sk.id, { size: 180, plate: 'A-1856' })}</div>
+    <div class="mc-art">${roverSVG(sk.id, { size: 180, plate: me().plate })}</div>
     <h3 class="mc-title">${sk.name}</h3>
     <p class="mc-sub">${sk.desc} Скин увидят все, кто смотрит на карту.</p>
     <div class="price-big">${fmtNum(sk.price)} ⚙️ <small>у вас ${fmtNum(S.coins)}</small></div>
@@ -418,7 +462,7 @@ $('#btnEquip').onclick = () => {
 function equip(sk, bought) {
   S.skin = sk.id; save();
   haptic([12, 50, 12]);
-  renderWardrobe(); renderChips(); repaintMarker('semen'); renderSheet(); renderProfile();
+  renderWardrobe(); repaintMarkers(); renderSheet(); renderProfile();
   toast(bought ? `«${sk.name}» куплен и надет на Семёна` : `Семён переоделся в «${sk.name}»`);
 }
 
@@ -426,6 +470,9 @@ function equip(sk, bought) {
    ПОДКАСТ
    ============================================================ */
 let playing = null, playTimer = null, playPos = 0;
+
+const ICO_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="3" width="5.5" height="18" rx="2"/><rect x="13.5" y="3" width="5.5" height="18" rx="2"/></svg>';
+const ICO_PLAY  = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 3.7c0-1.3 1.4-2.1 2.5-1.4l12 8.3a1.7 1.7 0 0 1 0 2.8l-12 8.3C7.4 22.4 6 21.6 6 20.3V3.7Z"/></svg>';
 
 function renderPodcast() {
   $('#podCover').innerHTML = roverSVG('neon', { size: 118, flat: true, eyes: 'happy' });
@@ -453,16 +500,13 @@ function play(ep) {
   renderPodcast();
   startTimer();
 }
-const ICO_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="3" width="5.5" height="18" rx="2"/><rect x="13.5" y="3" width="5.5" height="18" rx="2"/></svg>';
-const ICO_PLAY  = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 3.7c0-1.3 1.4-2.1 2.5-1.4l12 8.3a1.7 1.7 0 0 1 0 2.8l-12 8.3C7.4 22.4 6 21.6 6 20.3V3.7Z"/></svg>';
-
 function startTimer() {
   clearInterval(playTimer);
   $('#plToggle').innerHTML = ICO_PAUSE;
   const total = durSec(playing.dur);
   playTimer = setInterval(() => {
     playPos += 1.6;                       // ускоренная «перемотка» для демо
-    if (playPos >= total) { playPos = 0; }
+    if (playPos >= total) playPos = 0;
     $('#plProgress').style.width = (playPos / total * 100) + '%';
     $('#plCur').textContent = fmtSec(playPos);
   }, 90);
@@ -484,7 +528,10 @@ $('#promoWardrobe').onclick = () => go('wardrobe');
    ПРОФИЛЬ
    ============================================================ */
 function renderProfile() {
+  const r = me();
   $('#profArt').innerHTML = roverSVG(S.skin, { size: 104, flat: true, eyes: 'happy' });
+  $('#profName').textContent = r.name;
+  $('#profSub').textContent = `Ровер ${r.plate} · S/N ${r.sn} · с вами с 12 мая`;
   $('#achis').innerHTML = ACHIS.map(a => `
     <div class="achi ${a.got ? '' : 'off'}">
       <span class="i">${a.ico}</span><b>${a.name}</b><span>${a.hint}</span>
@@ -538,7 +585,6 @@ function go(name) {
   $$('.tab').forEach(t => t.classList.toggle('is-active', t.dataset.goto === name));
   $('#tabbar').classList.toggle('dark', name === 'podcast');
   document.body.classList.toggle('dark-status', name === 'podcast');
-  $('#tabbar').style.display = '';
   if (name === 'wardrobe') { selectedSkin = S.skin; renderWardrobe(); }
   if (name === 'podcast') renderPodcast();
   if (name === 'profile') { renderProfile(); $('#tabDot').hidden = true; }
@@ -550,6 +596,7 @@ document.addEventListener('click', e => {
   const b = e.target.closest('[data-goto]'); if (b) go(b.dataset.goto);
   const c = e.target.closest('[data-rv]'); if (c && c.dataset.rv) selectRover(c.dataset.rv);
 });
+$('#mapTitle').onclick = () => { if (selectedId !== 'semen') selectRover('semen'); };
 $('#btnLocate').onclick = () => { map.panTo(HOME, { animate: true }); toast('Вы здесь'); };
 $('#btnLayers').onclick = () => toast('В прототипе один слой карты');
 
@@ -557,7 +604,6 @@ $('#btnLayers').onclick = () => toast('В прототипе один слой �
    СТАРТ
    ============================================================ */
 initMap();
-renderChips();
 renderSheet();
 renderWardrobe();
 renderProfile();
@@ -567,10 +613,11 @@ updatePhotoBadge();
 if (!localStorage.getItem('rover.seen')) {
   localStorage.setItem('rover.seen', '1');
   setTimeout(() => modal(`
-    <div class="mc-art">${roverSVG(S.skin, { size: 180, eyes: 'happy', plate: 'A-1856' })}</div>
+    <div class="mc-art">${roverSVG(S.skin, { size: 180, eyes: 'happy', plate: me().plate })}</div>
     <h3 class="mc-title">Знакомьтесь — Семён</h3>
-    <p class="mc-sub">Ровер A-1856 закреплён за вами. Он настоящий и прямо сейчас развозит заказы
-      в Хамовниках. Следите за ним на карте, спрашивайте как дела, переодевайте и подавайте сигнал —
+    <p class="mc-sub">Ровер ${me().plate}, серийный номер ${me().sn}, закреплён за вами.
+      Он настоящий и прямо сейчас развозит заказы в Хамовниках со скоростью пешехода.
+      Следите за ним на карте, спрашивайте как дела, переодевайте и подавайте сигнал —
       он правда моргнёт фарами.</p>
     <div class="mc-row"><button class="btn-primary" data-close>Поехали</button></div>`), 700);
 }
