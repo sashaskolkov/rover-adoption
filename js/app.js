@@ -137,10 +137,12 @@ let map, markers = {}, meMarker;
 function initMap() {
   map = L.map('map', {
     center: [55.7345, 37.5895], zoom: 16, zoomControl: false,
-    attributionControl: true, minZoom: 14, maxZoom: 18
+    attributionControl: false, minZoom: 14, maxZoom: 18
   });
+  // Плашки на карте нет: брендинг Leaflet убран совсем, а обязательная
+  // ссылка на OpenStreetMap перенесена в подпись под макетом и в профиль.
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap', maxZoom: 19, className: 'tiles'
+    maxZoom: 19, className: 'tiles'
   }).addTo(map);
 
   meMarker = L.marker(HOME, {
