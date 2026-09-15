@@ -1,0 +1,17 @@
+{
+  "name": "Ровер — усынови робота",
+  "short_name": "Ровер",
+  "description": "Прототип: твой личный ровер на карте города.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F5F4F2",
+  "theme_color": "#F5F4F2",
+  "lang": "ru",
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

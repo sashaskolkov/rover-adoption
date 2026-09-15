@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Ровер">
+<meta name="theme-color" content="#F5F4F2">
+<title>Ровер — усынови робота</title>
+<meta name="description" content="Прототип приложения: возьми себе ровера, следи за ним на карте, наряжай и слушай подкаст.">
+<meta property="og:title" content="Ровер — усынови робота">
+<meta property="og:description" content="Прототип: твой личный ровер Семён на карте города.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="stage">
+  <div class="device" id="device">
+    <div class="bezel">
+      <div class="island"></div>
+
+      <div class="viewport" id="viewport">
+
+        <!-- ============ STATUS BAR ============ -->
+        <div class="statusbar">
+          <span class="sb-time" id="sbTime">17:28</span>
+          <span class="sb-right">
+            <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7.5" width="3" height="3.5" rx="1"/><rect x="4.6" y="5" width="3" height="6" rx="1"/><rect x="9.2" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.8" y="0" width="3" height="11" rx="1" opacity=".35"/></svg>
+            <span class="sb-lte">LTE</span>
+            <span class="sb-batt"><i style="width:62%"></i></span>
+          </span>
+        </div>
+
+        <!-- ============ SCREEN: MAP ============ -->
+        <section class="screen is-active" data-screen="map">
+          <div id="map"></div>
+
+          <div class="map-top">
+            <button class="round-btn" id="btnLayers" aria-label="Слои">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="m3 13 9 5 9-5"/></svg>
+            </button>
+            <div class="map-title">
+              <span class="mt-label">Мой ровер</span>
+              <span class="mt-value" id="mapTitleName">Семён</span>
+            </div>
+            <button class="round-btn" id="btnBell" aria-label="Уведомления">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+              <i class="dot"></i>
+            </button>
+          </div>
+
+          <div class="map-side">
+            <button class="round-btn" id="btnPhotoShortcut" aria-label="Фото из глаз ровера">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 8.5A2.5 2.5 0 0 1 5.5 6H8l1.3-2h5.4L16 6h2.5A2.5 2.5 0 0 1 21 8.5v9A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5v-9Z"/><circle cx="12" cy="12.5" r="3.4"/></svg>
+              <i class="badge" id="photoBadge">1</i>
+            </button>
+            <button class="round-btn" id="btnLocate" aria-label="Моё место">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21 3 3 10.5l7.5 2.8L13.3 21 21 3Z"/></svg>
+            </button>
+          </div>
+
+          <!-- rover chips carousel -->
+          <div class="chips" id="chips"></div>
+
+          <!-- bottom sheet -->
+          <div class="sheet" id="sheet">
+            <div class="sheet-grab" id="sheetGrab"><i></i></div>
+            <div class="sheet-head">
+              <div class="rover-ava" id="sheetAva"></div>
+              <div class="sheet-id">
+                <h2 id="sheetName">Семён</h2>
+                <p id="sheetSub">A-1856 · в пути · 240 м от вас</p>
+              </div>
+              <div class="mood" id="sheetMood">
+                <span class="mood-emoji">🔋</span>
+                <span class="mood-val">78%</span>
+              </div>
+            </div>
+
+            <div class="quick">
+              <button class="q-btn" id="btnHow">
+                <span class="q-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9.7 9.7 0 0 1-3-.5L4 21l1.6-4.3A8.2 8.2 0 0 1 4 11.5C4 6.8 7.9 3.5 12.5 3.5S21 6.8 21 11.5Z"/><path d="M9 11h.01M12.5 11h.01M16 11h.01"/></svg></span>
+                <span class="q-lbl">Как дела?</span>
+              </button>
+              <button class="q-btn" id="btnSignal">
+                <span class="q-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h3.5L14 19V5L7.5 9H4Z"/><path d="M17.5 8.5a5 5 0 0 1 0 7"/><path d="M20 6a9 9 0 0 1 0 12"/></svg></span>
+                <span class="q-lbl">Сигнал</span>
+              </button>
+              <button class="q-btn" id="btnPhoto">
+                <span class="q-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M3 8.7A2.7 2.7 0 0 1 5.7 6H8l1.3-2h5.4L16 6h2.3A2.7 2.7 0 0 1 21 8.7v8.6A2.7 2.7 0 0 1 18.3 20H5.7A2.7 2.7 0 0 1 3 17.3V8.7Z"/><circle cx="12" cy="12.6" r="3.5"/></svg></span>
+                <span class="q-lbl">Фото дня</span>
+              </button>
+            </div>
+
+            <div class="sheet-scroll">
+              <div class="answer" id="answer" hidden>
+                <div class="answer-bubble" id="answerText"></div>
+              </div>
+
+              <div class="stat-row">
+                <div class="stat"><b id="stOrders">37</b><span>заказов за сутки</span></div>
+                <div class="stat"><b id="stKm">18,4</b><span>км сегодня</span></div>
+                <div class="stat"><b id="stDays">126</b><span>дней с вами</span></div>
+              </div>
+
+              <div class="section-title">Рядом с Семёном</div>
+              <div class="nearby" id="nearby"></div>
+
+              <div class="promo" id="promoWardrobe">
+                <div class="promo-txt">
+                  <b>Семёну нечего надеть</b>
+                  <span>В гардеробе 9 скинов. У вас 1 240 ⚙️</span>
+                </div>
+                <div class="promo-art" id="promoArt"></div>
+              </div>
+
+              <div class="promo promo-dark" id="promoPodcast">
+                <div class="promo-txt">
+                  <b>Подкаст «Восемь колёс»</b>
+                  <span>Новый выпуск: «Почему ровер уступает бабушке»</span>
+                </div>
+                <div class="promo-play">▶</div>
+              </div>
+              <div class="sheet-pad"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ SCREEN: WARDROBE ============ -->
+        <section class="screen" data-screen="wardrobe">
+          <div class="nav">
+            <button class="nav-back" data-goto="map" aria-label="Назад">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+            </button>
+            <h1>Гардероб</h1>
+            <div class="wallet"><span id="walletVal">1 240</span> ⚙️</div>
+          </div>
+
+          <div class="scroll">
+            <div class="preview">
+              <div class="preview-glow"></div>
+              <div class="preview-art" id="previewArt"></div>
+              <div class="preview-name" id="previewName">Классика</div>
+              <div class="preview-hint">Скин виден другим владельцам на карте</div>
+            </div>
+
+            <div class="skin-tabs" id="skinTabs"></div>
+            <div class="skins" id="skins"></div>
+            <div class="scroll-pad"></div>
+          </div>
+
+          <div class="equip-bar" id="equipBar">
+            <button class="btn-primary" id="btnEquip">Надеть</button>
+          </div>
+        </section>
+
+        <!-- ============ SCREEN: PODCAST ============ -->
+        <section class="screen" data-screen="podcast">
+          <div class="nav nav-dark">
+            <button class="nav-back" data-goto="map" aria-label="Назад">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+            </button>
+            <h1>Подкаст</h1>
+            <div style="width:38px"></div>
+          </div>
+
+          <div class="scroll pod-scroll">
+            <div class="pod-hero">
+              <div class="pod-cover" id="podCover"></div>
+              <div class="pod-meta">
+                <span class="pod-kicker">Ведут роверы</span>
+                <h2>Восемь колёс</h2>
+                <p>Подкаст о том, как автономные технологии живут на тротуаре. Без людей в кадре.</p>
+                <button class="btn-yellow" id="btnPodPlay">▶ Слушать выпуск</button>
+              </div>
+            </div>
+
+            <div class="player" id="player" hidden>
+              <div class="pl-art" id="plArt"></div>
+              <div class="pl-body">
+                <b id="plTitle">—</b>
+                <div class="pl-bar"><i id="plProgress"></i></div>
+                <div class="pl-time"><span id="plCur">0:00</span><span id="plDur">0:00</span></div>
+              </div>
+              <button class="pl-btn" id="plToggle" aria-label="Пауза"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="3" width="5.5" height="18" rx="2"/><rect x="13.5" y="3" width="5.5" height="18" rx="2"/></svg></button>
+            </div>
+
+            <div class="section-title light">Выпуски</div>
+            <div class="episodes" id="episodes"></div>
+            <div class="scroll-pad"></div>
+          </div>
+        </section>
+
+        <!-- ============ SCREEN: PROFILE ============ -->
+        <section class="screen" data-screen="profile">
+          <div class="nav">
+            <button class="nav-back" data-goto="map" aria-label="Назад">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+            </button>
+            <h1>Профиль</h1>
+            <div class="wallet"><span id="walletVal2">1 240</span> ⚙️</div>
+          </div>
+
+          <div class="scroll">
+            <div class="prof-card">
+              <div class="prof-art" id="profArt"></div>
+              <div class="prof-id">
+                <h2 id="profName">Семён</h2>
+                <p>Ровер A-1856 · с вами с 12 мая</p>
+                <div class="prof-tags">
+                  <span class="tag">Опекун: Саша</span>
+                  <span class="tag tag-y">Уровень 4</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="xp">
+              <div class="xp-head"><span>До уровня 5</span><b>1 240 / 2 000 ⚙️</b></div>
+              <div class="xp-bar"><i style="width:62%"></i></div>
+            </div>
+
+            <div class="section-title">Достижения</div>
+            <div class="achis" id="achis"></div>
+
+            <div class="section-title">Дневник Семёна</div>
+            <div class="diary" id="diary"></div>
+
+            <div class="section-title">Демо-режим</div>
+            <div class="demo-list">
+              <button class="demo-row" id="demoPush"><span>Прислать пуш «ровер рядом»</span><i>→</i></button>
+              <button class="demo-row" id="demoPhotoReset"><span>Сбросить фото дня</span><i>→</i></button>
+              <button class="demo-row" id="demoCoins"><span>Начислить 1 000 ⚙️</span><i>→</i></button>
+              <button class="demo-row" id="demoReset"><span>Сбросить весь прогресс</span><i>→</i></button>
+            </div>
+            <div class="disclaimer">Прототип. Данные вымышленные, ровер не настоящий — пока.</div>
+            <div class="scroll-pad"></div>
+          </div>
+        </section>
+
+        <!-- ============ TAB BAR ============ -->
+        <nav class="tabbar" id="tabbar">
+          <button class="tab" data-goto="wardrobe">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M6 8h12l2 12H4L6 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+            <span>Гардероб</span>
+          </button>
+          <button class="tab is-active" data-goto="map">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="m9 19-6 2V6l6-2 6 2 6-2v9"/><path d="M9 4v15"/><path d="M15 6v6"/><circle cx="18" cy="18" r="3"/></svg>
+            <span>Карта</span>
+          </button>
+          <button class="tab" data-goto="podcast">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3a4 4 0 0 1 4 4v4a4 4 0 0 1-8 0V7a4 4 0 0 1 4-4Z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>
+            <span>Подкаст</span>
+          </button>
+          <button class="tab" data-goto="profile">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+            <span>Профиль</span>
+            <i class="tab-dot" id="tabDot" hidden></i>
+          </button>
+        </nav>
+
+        <!-- ============ OVERLAYS ============ -->
+        <div class="push" id="push">
+          <div class="push-ico" id="pushIco"></div>
+          <div class="push-body">
+            <div class="push-head"><b>Ровер</b><span id="pushTime">сейчас</span></div>
+            <div class="push-title" id="pushTitle">Семён в 40 метрах от вас</div>
+            <div class="push-text" id="pushText">Едет по Льва Толстого. Помаши — он моргнёт фарами.</div>
+          </div>
+        </div>
+
+        <div class="modal" id="modal">
+          <div class="modal-card" id="modalCard"></div>
+        </div>
+
+        <div class="toast" id="toast"></div>
+
+        <div class="home-ind"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage-note">
+    <b>Прототип · тизер</b>
+    <span>Нажимайте по экрану как в приложении. На айфоне откройте ссылку и добавьте на домашний экран.</span>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/art.js"></script>
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
