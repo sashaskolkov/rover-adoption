@@ -235,8 +235,6 @@ function renderNearby() {
 const sheet = $('#sheet');
 function setSheet(expanded) {
   sheet.classList.toggle('expanded', expanded);
-  const h = expanded ? 648 : 258;
-  $('#viewport').style.setProperty('--sheet-h', h + 'px');
   $('#chips').classList.toggle('hide', expanded);
   $('.map-side').classList.toggle('hide', expanded);
 }

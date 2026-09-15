@@ -14,8 +14,9 @@
   --line:#EBE9E5;
   --dark:#18171A;
   --radius:20px;
-  --sheet-collapsed:258px;
-  --sheet-expanded:648px;
+  --sheet-collapsed:min(258px,34vh);
+  --sheet-expanded:min(648px,80vh);
+  --tabbar-h:82px;
   --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter","Helvetica Neue",Arial,sans-serif;
 }
 
@@ -51,15 +52,6 @@ button{font-family:inherit;border:0;background:none;padding:0;cursor:pointer;col
   body{overflow:auto}
   .stage{gap:14px;padding:0}
   .device{width:min(392px,100vw);height:min(846px,100svh)}
-}
-@media (max-width:480px){
-  body{background:var(--bg);align-items:stretch}
-  .stage{gap:0;width:100%}
-  .device{width:100%;height:100svh}
-  .bezel{border-radius:0;box-shadow:none}
-  .viewport{inset:0;border-radius:0}
-  .island{display:none}
-  .stage-note{display:none}
 }
 
 /* ---------- статус-бар ---------- */
@@ -146,20 +138,18 @@ body.dark-status .statusbar{color:#fff}
   padding:0 5px;border:2px solid #fff;font-style:normal;
 }
 .round-btn .badge[hidden]{display:none}
-.map-side{position:absolute;right:14px;z-index:30;bottom:calc(var(--sheet-h,258px) + 14px);display:flex;flex-direction:column;gap:10px;transition:bottom .35s cubic-bezier(.22,1,.36,1)}
+.map-side{position:absolute;right:14px;z-index:30;bottom:calc(var(--sheet-collapsed) + 14px);display:flex;flex-direction:column;gap:10px}
 
 /* чипсы роверов */
 .chips{
-  position:absolute;left:0;right:0;z-index:30;bottom:calc(var(--sheet-h,258px) + 14px);
+  position:absolute;left:0;right:0;z-index:30;bottom:calc(var(--sheet-collapsed) + 14px);
   display:flex;gap:9px;overflow-x:auto;padding:0 14px;scrollbar-width:none;
-  transition:bottom .35s cubic-bezier(.22,1,.36,1);
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 14px,#000 calc(100% - 60px),transparent);
 }
 .chips::-webkit-scrollbar{display:none}
 /* при раскрытой шторке карта почти не видна — убираем лишнее */
-.sheet.expanded ~ .chips,.chips.hide{opacity:0;pointer-events:none}
-.chips,.map-side{transition:bottom .35s cubic-bezier(.22,1,.36,1),opacity .25s}
-.map-side.hide{opacity:0;pointer-events:none}
+.chips,.map-side{transition:opacity .25s}
+.chips.hide,.map-side.hide{opacity:0;pointer-events:none}
 .chip{
   flex:none;width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);
   display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.14);
@@ -207,7 +197,11 @@ body.dark-status .statusbar{color:#fff}
 .q-btn .q-ico svg{width:22px;height:22px}
 .q-btn[disabled]{opacity:.45}
 
-.sheet-scroll{flex:1;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:0 14px}
+/* в свёрнутом виде содержимое не должно выглядывать из-под кнопок */
+.sheet-scroll{flex:1;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:0 14px;
+  opacity:0;transition:opacity .2s ease}
+.sheet:not(.expanded) .sheet-scroll{pointer-events:none}
+.sheet.expanded .sheet-scroll{opacity:1;transition-delay:.12s}
 .sheet-pad{height:20px}
 
 .answer{margin-bottom:14px;animation:pop .32s cubic-bezier(.22,1,.36,1)}
@@ -465,3 +459,27 @@ body.dark-status .statusbar{color:#fff}
 
 /* скрываем скроллбары внутри «телефона» */
 .scroll::-webkit-scrollbar,.sheet-scroll::-webkit-scrollbar,.modal-card::-webkit-scrollbar{width:0;display:none}
+
+/* ============================================================
+   Телефон: макет разворачивается во весь экран.
+   Блок держим последним — он переопределяет базовые правила.
+   ============================================================ */
+@media (max-width:480px){
+  body{background:var(--bg);align-items:stretch}
+  .stage{gap:0;width:100%}
+  .device{width:100%;height:100svh}
+  .bezel{border-radius:0;box-shadow:none}
+  .viewport{inset:0;border-radius:0}
+  .island,.stage-note{display:none}
+  /* статус-бар и индикатор на настоящем телефоне рисует сама iOS */
+  .statusbar,.home-ind{display:none}
+  .map-top{top:calc(env(safe-area-inset-top,0px) + 14px)}
+  .push{top:calc(env(safe-area-inset-top,0px) + 10px)}
+  .nav{padding-top:calc(env(safe-area-inset-top,0px) + 16px)}
+  .leaflet-bottom.leaflet-right{top:calc(env(safe-area-inset-top,0px) + 66px)}
+  .tabbar{height:calc(72px + env(safe-area-inset-bottom,0px));padding-bottom:env(safe-area-inset-bottom,0px)}
+  .sheet{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+  .equip-bar{padding-bottom:calc(82px + env(safe-area-inset-bottom,0px))}
+  .scroll-pad{height:calc(120px + env(safe-area-inset-bottom,0px))}
+  .toast{bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+}
