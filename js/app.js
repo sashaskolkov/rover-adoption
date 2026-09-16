@@ -30,7 +30,7 @@ const me = () => ROVERS.find(r => r.mine);
 const byId = id => ROVERS.find(r => r.id === id);
 let selectedId = 'semen';
 let selectedSkin = S.skin;
-let skinCat = 'all';
+let skinCat = 'owned';             // «Мой шкаф» или «Магазин»
 
 /* ---------- утилиты ---------- */
 function toast(msg, ms = 2400) {
@@ -395,30 +395,76 @@ $('#modal').addEventListener('click', e => {
 /* ============================================================
    ГАРДЕРОБ
    ============================================================ */
-function renderWardrobe() {
-  $('#skinTabs').innerHTML = SKIN_CATS.map(c =>
-    `<button class="st ${c.id === skinCat ? 'is-on' : ''}" data-cat="${c.id}">${c.name}</button>`).join('');
+const CAT_NAME = Object.fromEntries(SKIN_CATS.map(c => [c.id, c.name]));
+let use3D = false;                 // включается при первом заходе в гардероб
 
-  const list = SKINS.filter(s => skinCat === 'all' || s.cat === skinCat);
+/* Один раз поднимаем сцену и собираем 3D-миниатюры для карточек.
+   Без WebGL всё остаётся на прежнем SVG — гардероб не ломается. */
+function ensure3D() {
+  if (!use3D && R3D.available()) {
+    R3D.renderThumbs(SKINS.map(s => s.id));
+    use3D = R3D.mount($('#rover3d'), selectedSkin);
+  }
+  // раскладку выставляем всегда: без WebGL показываем плоского ровера
+  $('#stage3d').classList.toggle('is3d', use3D);
+  $('#previewArt').hidden = use3D;
+  $('#spinHint').hidden = !use3D;
+}
+
+function skinThumb(id) {
+  const t = use3D && R3D.thumb(id);
+  return t ? `<img class="skin-img" src="${t}" alt="">`
+           : roverSVG(id, { size: 104, flat: true });
+}
+
+function renderWardrobe() {
+  const owned = SKINS.filter(s => S.owned.includes(s.id));
+  const shop  = SKINS.filter(s => !S.owned.includes(s.id));
+
+  $('#skinTabs').innerHTML = [
+    { id: 'owned', name: 'Мой шкаф', n: owned.length },
+    { id: 'shop',  name: 'Магазин',  n: shop.length }
+  ].map(t => `<button class="seg-btn ${t.id === skinCat ? 'is-on' : ''}" data-cat="${t.id}">
+      ${t.name}<i>${t.n}</i></button>`).join('');
+
+  const list = skinCat === 'owned' ? owned : shop;
   $('#skins').innerHTML = list.map(s => {
     const own = S.owned.includes(s.id);
     const on = S.skin === s.id;
-    return `<button class="skin ${selectedSkin === s.id ? 'is-sel' : ''} ${on ? 'is-on' : ''}" data-skin="${s.id}">
+    const afford = S.coins >= s.price;
+    return `<button class="skin ${selectedSkin === s.id ? 'is-sel' : ''} ${on ? 'is-on' : ''} ${!own && !afford ? 'is-poor' : ''}" data-skin="${s.id}">
       ${on ? '<i class="flag">Надет</i>' : ''}
-      ${!own ? '<i class="lock">🔒</i>' : ''}
-      <div class="skin-art">${roverSVG(s.id, { size: 104, flat: true })}</div>
+      ${own && !on ? '<i class="flag flag-own">В шкафу</i>' : ''}
+      ${!own ? `<i class="flag flag-cat">${CAT_NAME[s.cat] || ''}</i>` : ''}
+      <div class="skin-art">${skinThumb(s.id)}</div>
       <b>${s.name}</b>
-      <span class="p ${own ? 'own' : ''}">${own ? (on ? 'на ровере' : 'куплен') : fmtNum(s.price) + ' ⚙️'}</span>
+      <span class="p ${own ? 'own' : ''}">
+        ${own ? (on ? 'на ровере' : 'куплен') : fmtNum(s.price) + ' ⚙️'}
+      </span>
     </button>`;
   }).join('');
 
+  const empty = $('#skinsEmpty');
+  empty.hidden = list.length > 0;
+  empty.textContent = skinCat === 'owned'
+    ? 'В шкафу пока только заводская ливрея.'
+    : 'Вы скупили весь гардероб. Семён доволен.';
+
   const sk = SKINS.find(s => s.id === selectedSkin);
-  $('#previewArt').innerHTML = roverSVG(selectedSkin, { size: 216, plate: me().plate });
+  if (use3D) R3D.setSkin(selectedSkin);
+  else $('#previewArt').innerHTML = roverSVG(selectedSkin, { size: 216, plate: me().plate });
+
+  // та же примерка, но глазами других: иконка на карте
+  // ярлык всегда жёлтый: на карте свой ровер помечен именно так
+  $('#pinPreview').innerHTML = roverPin(selectedSkin);
+  $('#pinName').textContent = me().name;
+
   $('#previewName').textContent = sk.name;
   $('#previewHint').textContent = sk.desc;
 
   const own = S.owned.includes(selectedSkin);
   const btn = $('#btnEquip');
+  btn.classList.toggle('buy', !own);
   if (S.skin === selectedSkin) { btn.textContent = 'Уже на Семёне'; btn.disabled = true; }
   else if (own) { btn.textContent = 'Надеть на Семёна'; btn.disabled = false; }
   else { btn.textContent = `Купить за ${fmtNum(sk.price)} ⚙️`; btn.disabled = false; }
@@ -429,12 +475,17 @@ function renderWardrobe() {
 
 $('#skins').addEventListener('click', e => {
   const b = e.target.closest('[data-skin]'); if (!b) return;
-  selectedSkin = b.dataset.skin; haptic(6); renderWardrobe();
+  if (selectedSkin === b.dataset.skin) return;
+  selectedSkin = b.dataset.skin;
+  haptic(6);
+  if (use3D) R3D.setSkin(selectedSkin, true);
+  renderWardrobe();
 });
 $('#skinTabs').addEventListener('click', e => {
   const b = e.target.closest('[data-cat]'); if (!b) return;
-  skinCat = b.dataset.cat; renderWardrobe();
+  skinCat = b.dataset.cat; haptic(6); renderWardrobe();
 });
+$('#stage3d').addEventListener('pointerdown', () => $('#spinHint').classList.add('gone'));
 
 $('#btnEquip').onclick = () => {
   const sk = SKINS.find(s => s.id === selectedSkin);
@@ -464,6 +515,8 @@ $('#btnEquip').onclick = () => {
 function equip(sk, bought) {
   S.skin = sk.id; save();
   haptic([12, 50, 12]);
+  if (bought) skinCat = 'owned';          // купленное сразу показываем в шкафу
+  if (use3D) R3D.setSkin(sk.id, true);
   renderWardrobe(); repaintMarkers(); renderSheet(); renderProfile();
   toast(bought ? `«${sk.name}» куплен и надет на Семёна` : `Семён переоделся в «${sk.name}»`);
 }
@@ -587,7 +640,10 @@ function go(name) {
   $$('.tab').forEach(t => t.classList.toggle('is-active', t.dataset.goto === name));
   $('#tabbar').classList.toggle('dark', name === 'podcast');
   document.body.classList.toggle('dark-status', name === 'podcast');
-  if (name === 'wardrobe') { selectedSkin = S.skin; renderWardrobe(); }
+  if (name === 'wardrobe') {
+    selectedSkin = S.skin; skinCat = 'owned';
+    ensure3D(); renderWardrobe(); R3D.start();
+  } else R3D.stop();          // не крутим сцену впустую на других экранах
   if (name === 'podcast') renderPodcast();
   if (name === 'profile') { renderProfile(); $('#tabDot').hidden = true; }
   if (name === 'map') setTimeout(() => map.invalidateSize(), 320);

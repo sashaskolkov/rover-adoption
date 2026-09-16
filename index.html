@@ -142,13 +142,32 @@
           <div class="scroll">
             <div class="preview">
               <div class="preview-glow"></div>
-              <div class="preview-art" id="previewArt"></div>
-              <div class="preview-name" id="previewName">Классика</div>
-              <div class="preview-hint" id="previewHint">Скин виден другим владельцам на карте</div>
+
+              <!-- объёмный ровер; если WebGL нет, сюда падает плоский SVG -->
+              <div class="stage3d" id="stage3d">
+                <canvas id="rover3d"></canvas>
+                <div class="preview-art" id="previewArt" hidden></div>
+              </div>
+              <div class="spin-hint" id="spinHint" hidden>покрутите пальцем</div>
+
+              <!-- как этот же скин выглядит на карте -->
+              <div class="map-chip">
+                <span class="mc-label">На карте</span>
+                <div class="mc-pin">
+                  <div class="mc-bubble" id="pinPreview"></div>
+                  <div class="mc-name" id="pinName">Семён</div>
+                </div>
+              </div>
+
+              <div class="preview-meta">
+                <div class="preview-name" id="previewName">Классика</div>
+                <div class="preview-hint" id="previewHint">Скин виден другим владельцам на карте</div>
+              </div>
             </div>
 
-            <div class="skin-tabs" id="skinTabs"></div>
+            <div class="seg" id="skinTabs"></div>
             <div class="skins" id="skins"></div>
+            <div class="skins-empty" id="skinsEmpty" hidden></div>
             <div class="scroll-pad"></div>
           </div>
 
@@ -291,7 +310,9 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
 <script src="js/art.js"></script>
+<script src="js/rover3d.js"></script>
 <script src="js/routes.js"></script>
 <script src="js/data.js"></script>
 <script src="js/app.js"></script>

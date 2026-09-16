@@ -6,84 +6,92 @@
 let _uid = 0;
 const uid = () => 'g' + (++_uid);
 
-/* Палитры скинов. lid — верхняя крышка, body — корпус,
-   glass — панель «лица», eye — цвет глаз. */
+/* Палитры скинов.
+   Ровер нарисован по настоящему: спереди — чёрный сенсорный блок
+   с вертикальными фарами, сзади — грузовой контейнер, сверху штанга
+   с красным флажком. Скин перекрашивает контейнер и флаг, чёрный
+   блок с датчиками остаётся — по нему ровер и узнаётся.
+
+   lid   — контейнер, lid2 — его тень
+   body  — сенсорный блок
+   glass — передняя панель с фарами
+   eye   — свет фар
+   flag  — флажок на штанге */
 const SKIN_ART = {
-  classic: { lid: '#FFFFFF', lid2: '#ECEAE6', body: '#2E2D2B', glass: '#141315', eye: '#FFFFFF', wheel: '#232221' },
-  courier: { lid: '#FFDB4D', lid2: '#F5C000', body: '#21201F', glass: '#141315', eye: '#FFE873', wheel: '#181716' },
-  neon:    { lid: '#20204A', lid2: '#12122E', body: '#0E0E22', glass: '#07070F', eye: '#5BF3FF', wheel: '#0A0A16', glow: '#B14BFF' },
-  winter:  { lid: '#EAF4FF', lid2: '#CFE4F7', body: '#3C4B5E', glass: '#141a22', eye: '#D8F1FF', wheel: '#26313D' },
-  tropic:  { lid: '#19C69B', lid2: '#0FA07C', body: '#154E44', glass: '#0C1C19', eye: '#FFF3B0', wheel: '#123A33' },
-  cosmo:   { lid: '#DDE3EC', lid2: '#B9C2D0', body: '#474D58', glass: '#0F1218', eye: '#9FE6FF', wheel: '#2C313A' },
-  pixel:   { lid: '#FFD34D', lid2: '#E8A400', body: '#2B2540', glass: '#100E1C', eye: '#7CFF6B', wheel: '#1D1930' },
-  royal:   { lid: '#F7D774', lid2: '#C89B26', body: '#2A2418', glass: '#15110A', eye: '#FFF0BE', wheel: '#1C1810' },
-  coffee:  { lid: '#8A5A3B', lid2: '#63402A', body: '#352419', glass: '#140E09', eye: '#F2D9B8', wheel: '#241810' },
-  rescue:  { lid: '#FF5436', lid2: '#D6371C', body: '#262524', glass: '#121111', eye: '#FFD5CC', wheel: '#181716' }
+  classic: { lid: '#FFFFFF', lid2: '#E4E1DC', body: '#1C1B1D', glass: '#0E0E10', eye: '#EAF4FF', wheel: '#1A1A1A', flag: '#F5372B' },
+  courier: { lid: '#FFDB4D', lid2: '#EDB800', body: '#1C1B1D', glass: '#0E0E10', eye: '#FFF4C2', wheel: '#181716', flag: '#F5372B' },
+  neon:    { lid: '#241B4D', lid2: '#140F2E', body: '#0E0C1A', glass: '#07070F', eye: '#5BF3FF', wheel: '#0A0A16', flag: '#B14BFF', glow: '#B14BFF' },
+  winter:  { lid: '#EAF4FF', lid2: '#C6DCF2', body: '#232A33', glass: '#10151C', eye: '#D8F1FF', wheel: '#1E242C', flag: '#E8453C' },
+  tropic:  { lid: '#19C69B', lid2: '#0E8F6F', body: '#16292A', glass: '#0A1516', eye: '#FFF3B0', wheel: '#14282A', flag: '#FF8FA3' },
+  cosmo:   { lid: '#DDE3EC', lid2: '#B4BECE', body: '#2B303A', glass: '#0F1218', eye: '#9FE6FF', wheel: '#232830', flag: '#4C7DFF' },
+  pixel:   { lid: '#FFD34D', lid2: '#E09400', body: '#241E38', glass: '#100E1C', eye: '#7CFF6B', wheel: '#1D1930', flag: '#6BE86B' },
+  royal:   { lid: '#F7D774', lid2: '#C08F14', body: '#241E12', glass: '#14110A', eye: '#FFF0BE', wheel: '#1C1810', flag: '#F7D774' },
+  coffee:  { lid: '#8A5A3B', lid2: '#5E3B25', body: '#241811', glass: '#120C08', eye: '#F2D9B8', wheel: '#1E140E', flag: '#C08552' },
+  rescue:  { lid: '#FF5436', lid2: '#D13519', body: '#1F1E1E', glass: '#0F0F0F', eye: '#FFE9E4', wheel: '#161515', flag: '#FFD54D' }
 };
 
-/* Глаза: разные выражения */
-function eyesPath(kind, c) {
+/* Передняя панель: у настоящего ровера нет глаз — две вертикальные
+   светодиодные фары и камера между ними. Параметр kind лишь слегка
+   меняет их «настроение». */
+function facePath(kind, c) {
   const e = c.eye;
-  switch (kind) {
-    case 'happy':
-      return `<path d="M72 106q9-11 18 0" stroke="${e}" stroke-width="7" stroke-linecap="round" fill="none"/>
-              <path d="M110 106q9-11 18 0" stroke="${e}" stroke-width="7" stroke-linecap="round" fill="none"/>`;
-    case 'square':
-      return `<rect x="74" y="94" width="16" height="16" fill="${e}"/><rect x="110" y="94" width="16" height="16" fill="${e}"/>`;
-    case 'sleepy':
-      return `<path d="M72 104h18M110 104h18" stroke="${e}" stroke-width="7" stroke-linecap="round"/>`;
-    case 'star':
-      return `<path d="M81 90l4.6 9.4 10.4 1.5-7.5 7.3 1.8 10.3L81 113.6 71.7 118.5l1.8-10.3-7.5-7.3 10.4-1.5z" fill="${e}"/>
-              <path d="M119 90l4.6 9.4 10.4 1.5-7.5 7.3 1.8 10.3L119 113.6l-9.3 4.9 1.8-10.3-7.5-7.3 10.4-1.5z" fill="${e}"/>`;
-    default:
-      return `<rect x="73" y="92" width="17" height="22" rx="8.5" fill="${e}"/>
-              <rect x="110" y="92" width="17" height="22" rx="8.5" fill="${e}"/>`;
-  }
+  const dim = kind === 'sleepy' ? .45 : 1;
+  const h = kind === 'happy' ? 30 : 26;
+  const y = 92 + (26 - h) / 2;
+  return `
+    <rect x="58" y="${y}" width="9" height="${h}" rx="4.5" fill="${e}" opacity="${dim}"/>
+    <rect x="58" y="${y}" width="9" height="${h}" rx="4.5" fill="#fff" opacity="${.35 * dim}"/>
+    <rect x="83" y="${y}" width="9" height="${h}" rx="4.5" fill="${e}" opacity="${dim}"/>
+    <rect x="83" y="${y}" width="9" height="${h}" rx="4.5" fill="#fff" opacity="${.35 * dim}"/>
+    <circle cx="75" cy="105" r="5.2" fill="#3A3A3E"/>
+    <circle cx="75" cy="105" r="2.4" fill="#0B0B0D"/>
+    <circle cx="73.6" cy="103.6" r="1" fill="#8D8D95"/>
+    <circle cx="61" cy="122" r="2.6" fill="#33333A"/>
+    <circle cx="89" cy="122" r="2.6" fill="#33333A"/>`;
 }
 
-/* Аксессуары поверх крышки */
+/* Аксессуары. Контейнер занимает x 92…180 / y 56…132,
+   сенсорный блок — x 44…104 / y 62…132, лидар сидит на нём. */
 function accessory(skin, id) {
   switch (skin) {
     case 'winter': return `
-      <path d="M52 44c0-16 21-27 48-27s48 11 48 27z" fill="#E8453C"/>
-      <rect x="46" y="38" width="108" height="14" rx="7" fill="#fff"/>
-      <circle cx="100" cy="12" r="11" fill="#fff"/>`;
+      <path d="M50 58c0-15 10-24 24-24s24 9 24 24z" fill="#E8453C"/>
+      <rect x="44" y="52" width="60" height="12" rx="6" fill="#F4F1EC"/>
+      <circle cx="74" cy="30" r="9" fill="#F4F1EC"/>`;
     case 'tropic': return `
-      <g transform="translate(140 26)">
-        <circle r="7" fill="#FF5E7A"/><circle cx="11" cy="-6" r="7" fill="#FF8FA3"/>
-        <circle cx="11" cy="7" r="7" fill="#FF8FA3"/><circle cx="-8" cy="8" r="7" fill="#FF8FA3"/>
-        <circle cx="-8" cy="-8" r="7" fill="#FF8FA3"/><circle r="4.5" fill="#FFD84D"/>
+      <g transform="translate(150 46)">
+        <circle r="6" fill="#FF5E7A"/><circle cx="9" cy="-5" r="6" fill="#FF8FA3"/>
+        <circle cx="9" cy="6" r="6" fill="#FF8FA3"/><circle cx="-7" cy="7" r="6" fill="#FF8FA3"/>
+        <circle cx="-7" cy="-7" r="6" fill="#FF8FA3"/><circle r="3.6" fill="#FFD84D"/>
       </g>
-      <rect x="60" y="86" width="80" height="16" rx="8" fill="#141315"/>
-      <path d="M62 90h30v10H62zM108 90h30v10h-30z" fill="#2B2B33"/>`;
+      <rect x="48" y="88" width="52" height="11" rx="5.5" fill="#141315"/>
+      <rect x="51" y="90" width="20" height="7" rx="3" fill="#33333B"/>
+      <rect x="77" y="90" width="20" height="7" rx="3" fill="#33333B"/>`;
     case 'cosmo': return `
-      <path d="M44 62a56 44 0 0 1 112 0z" fill="#BFE6FF" opacity=".42"/>
-      <path d="M44 62a56 44 0 0 1 112 0" fill="none" stroke="#fff" stroke-width="3"/>
-      <path d="M62 40q14-18 34-19" stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none" opacity=".8"/>`;
+      <path d="M40 66a34 30 0 0 1 68 0z" fill="#BFE6FF" opacity=".4"/>
+      <path d="M40 66a34 30 0 0 1 68 0" fill="none" stroke="#fff" stroke-width="3"/>
+      <path d="M54 50q9-12 22-13" stroke="#fff" stroke-width="4" stroke-linecap="round" fill="none" opacity=".75"/>`;
     case 'royal': return `
-      <path d="M62 40 68 8l16 18 16-24 16 24 16-18 6 32z" fill="url(#${id}gold)"/>
-      <rect x="60" y="38" width="80" height="11" rx="5.5" fill="url(#${id}gold)"/>
-      <circle cx="84" cy="30" r="4" fill="#E8453C"/><circle cx="116" cy="30" r="4" fill="#3C7FE8"/>`;
+      <path d="M98 54 103 30l12 13 11-18 11 18 12-13 5 24z" fill="url(#${id}gold)"/>
+      <rect x="96" y="52" width="82" height="10" rx="5" fill="url(#${id}gold)"/>
+      <circle cx="115" cy="44" r="3.4" fill="#E8453C"/><circle cx="148" cy="44" r="3.4" fill="#3C7FE8"/>`;
     case 'coffee': return `
-      <g transform="translate(100 18)">
-        <path d="M-18 6h32v16a8 8 0 0 1-8 8h-16a8 8 0 0 1-8-8z" fill="#fff"/>
-        <rect x="-21" y="0" width="38" height="8" rx="3" fill="#E7E2DA"/>
-        <path d="M-6 -6q6-6 0-12M6 -6q6-6 0-12" stroke="#CBBFB2" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <g transform="translate(136 30)">
+        <path d="M-14 4h28v14a7 7 0 0 1-7 7h-14a7 7 0 0 1-7-7z" fill="#fff"/>
+        <rect x="-17" y="-2" width="34" height="7" rx="3" fill="#E7E2DA"/>
+        <path d="M-5 -8q5-5 0-11M5 -8q5-5 0-11" stroke="#CBBFB2" stroke-width="2.6" stroke-linecap="round" fill="none"/>
       </g>`;
     case 'rescue': return `
-      <rect x="84" y="14" width="32" height="16" rx="6" fill="#FF3B2F"/>
-      <rect x="80" y="28" width="40" height="7" rx="3.5" fill="#1B1B1B"/>
-      <ellipse cx="100" cy="20" rx="26" ry="14" fill="#FF3B2F" opacity=".22"/>`;
+      <ellipse cx="136" cy="40" rx="24" ry="13" fill="#FF3B2F" opacity=".2"/>
+      <rect x="122" y="32" width="28" height="14" rx="5" fill="#FF3B2F"/>
+      <rect x="118" y="44" width="36" height="7" rx="3.5" fill="#1B1B1B"/>`;
     case 'pixel': return `
-      <g fill="#6BE86B"><rect x="76" y="20" width="10" height="10"/><rect x="86" y="10" width="10" height="10"/>
-      <rect x="96" y="20" width="10" height="10"/><rect x="106" y="10" width="10" height="10"/>
-      <rect x="116" y="20" width="10" height="10"/><rect x="66" y="30" width="70" height="10"/></g>`;
+      <g fill="#6BE86B"><rect x="112" y="38" width="9" height="9"/><rect x="121" y="29" width="9" height="9"/>
+      <rect x="130" y="38" width="9" height="9"/><rect x="139" y="29" width="9" height="9"/>
+      <rect x="148" y="38" width="9" height="9"/><rect x="104" y="47" width="62" height="9"/></g>`;
     case 'neon': return `
-      <rect x="66" y="30" width="68" height="8" rx="4" fill="#B14BFF"/>
-      <ellipse cx="100" cy="150" rx="74" ry="14" fill="url(#${id}under)"/>`;
-    case 'courier': return `
-      <circle cx="44" cy="64" r="12" fill="#E8453C"/>
-      <text x="44" y="71" font-size="17" font-weight="800" text-anchor="middle" fill="#fff" font-family="Helvetica,Arial">Я</text>`;
+      <rect x="96" y="120" width="80" height="5" rx="2.5" fill="#B14BFF"/>
+      <ellipse cx="104" cy="152" rx="76" ry="13" fill="url(#${id}under)"/>`;
     default: return '';
   }
 }
@@ -96,7 +104,7 @@ function accessory(skin, id) {
 function roverSVG(skin, o = {}) {
   const c = SKIN_ART[skin] || SKIN_ART.classic;
   const id = uid();
-  const eyes = o.eyes || (skin === 'pixel' ? 'square' : skin === 'tropic' ? 'sleepy' : 'normal');
+  const face = o.eyes || (skin === 'tropic' ? 'sleepy' : 'normal');
   const plate = o.plate || '';
   const w = o.size || 200;
 
@@ -105,60 +113,71 @@ function roverSVG(skin, o = {}) {
     <linearGradient id="${id}lid" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="${c.lid}"/><stop offset="1" stop-color="${c.lid2}"/>
     </linearGradient>
+    <linearGradient id="${id}blk" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${c.body}"/><stop offset="1" stop-color="#000" stop-opacity=".55"/>
+    </linearGradient>
     <linearGradient id="${id}gold" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#FFE9A8"/><stop offset="1" stop-color="#C89B26"/>
     </linearGradient>
     <radialGradient id="${id}under"><stop offset="0" stop-color="${c.glow || '#fff'}" stop-opacity=".75"/><stop offset="1" stop-color="${c.glow || '#fff'}" stop-opacity="0"/></radialGradient>
     <linearGradient id="${id}sheen" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="0" stop-color="#fff" stop-opacity=".4"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/>
     </linearGradient>
   </defs>
 
-  ${o.flat ? '' : `<ellipse cx="100" cy="160" rx="66" ry="8" fill="#000" opacity=".13"/>`}
+  ${o.flat ? '' : `<ellipse cx="102" cy="158" rx="68" ry="8" fill="#000" opacity=".13"/>`}
 
-  <!-- колёса -->
+  <!-- штанга с флажком: самая узнаваемая деталь силуэта -->
+  <rect x="61.4" y="18" width="2.2" height="66" rx="1.1" fill="#26262A"/>
+  <path d="M63 19h26v17H63z" fill="${c.flag || '#F5372B'}"/>
+  <path d="M63 19h26v5H63z" fill="#fff" opacity=".22"/>
+
+  <!-- колёса: три пары, вынесены за габарит корпуса -->
   <g>
-    <circle cx="48" cy="138" r="16" fill="${c.wheel}"/><circle cx="48" cy="138" r="6" fill="#8B8B8B"/>
-    <circle cx="100" cy="141" r="16" fill="${c.wheel}"/><circle cx="100" cy="141" r="6" fill="#8B8B8B"/>
-    <circle cx="152" cy="138" r="16" fill="${c.wheel}"/><circle cx="152" cy="138" r="6" fill="#8B8B8B"/>
+    <circle cx="58" cy="136" r="17" fill="${c.wheel}"/><circle cx="58" cy="136" r="7" fill="#57575C"/><circle cx="58" cy="136" r="3" fill="#2A2A2E"/>
+    <circle cx="106" cy="139" r="17" fill="${c.wheel}"/><circle cx="106" cy="139" r="7" fill="#57575C"/><circle cx="106" cy="139" r="3" fill="#2A2A2E"/>
+    <circle cx="152" cy="139" r="17" fill="${c.wheel}"/><circle cx="152" cy="139" r="7" fill="#57575C"/><circle cx="152" cy="139" r="3" fill="#2A2A2E"/>
   </g>
 
+  <!-- грузовой контейнер -->
+  <rect x="92" y="56" width="88" height="76" rx="14" fill="url(#${id}lid)"/>
+  <rect x="92" y="56" width="88" height="10" rx="5" fill="#000" opacity=".07"/>
+  <rect x="94" y="118" width="84" height="4" rx="2" fill="${c.eye}" opacity=".5"/>
+  ${plate ? `<text x="136" y="100" font-size="13" font-weight="800" text-anchor="middle"
+      fill="#000" opacity=".5" font-family="Helvetica,Arial" letter-spacing="-.3">${plate}</text>`
+    : `<circle cx="136" cy="96" r="12" fill="#F5372B" opacity=".92"/>
+       <path d="M133 90h4.6c3.4 0 5.4 2 5.4 5s-2 5.2-5.4 5.2H136v2.4h-3z" fill="#fff"/>`}
+
+  <!-- сенсорный блок -->
+  <rect x="44" y="62" width="60" height="70" rx="15" fill="${c.body}"/>
+  <rect x="44" y="62" width="60" height="70" rx="15" fill="url(#${id}sheen)"/>
+  <rect x="50" y="86" width="48" height="44" rx="11" fill="${c.glass}"/>
+  ${facePath(face, c)}
+
   <!-- лидар -->
-  <rect x="90" y="30" width="20" height="22" rx="6" fill="${c.wheel}"/>
-  <ellipse cx="100" cy="31" rx="11" ry="5" fill="#4A4A4A"/>
-  <circle cx="100" cy="31" r="3" fill="#FF4B3E"/>
-
-  <!-- корпус -->
-  <rect x="26" y="70" width="148" height="66" rx="22" fill="${c.body}"/>
-  <rect x="26" y="70" width="148" height="66" rx="22" fill="url(#${id}sheen)"/>
-
-  <!-- крышка -->
-  <rect x="22" y="46" width="156" height="36" rx="17" fill="url(#${id}lid)"/>
-  <rect x="34" y="55" width="132" height="4" rx="2" fill="#000" opacity=".08"/>
-
-  <!-- панель лица -->
-  <rect x="56" y="84" width="88" height="40" rx="16" fill="${c.glass}"/>
-  ${eyesPath(eyes, c)}
-
-  <!-- номерной знак -->
-  ${plate ? `<rect x="72" y="126" width="56" height="13" rx="4" fill="#F2F0EC"/>
-    <text x="100" y="136" font-size="10" font-weight="700" text-anchor="middle" fill="#2B2A28"
-      font-family="ui-monospace,Menlo,monospace" letter-spacing=".5">${plate}</text>` : ''}
+  <rect x="62" y="44" width="22" height="20" rx="5" fill="#2B2B2F"/>
+  <ellipse cx="73" cy="44" rx="11" ry="4.6" fill="#6E6E76"/>
+  <ellipse cx="73" cy="43" rx="7" ry="2.8" fill="#9A9AA4"/>
 
   ${accessory(skin, id)}
 </svg>`;
 }
 
-/* Маленький ровер для маркера на карте */
+/* Маленький ровер для маркера на карте: важен силуэт — флажок,
+   белый контейнер и чёрный нос читаются даже в 36 пикселях */
 function roverPin(skin) {
   const c = SKIN_ART[skin] || SKIN_ART.classic;
   return `<svg viewBox="0 0 60 60" width="40" height="40" aria-hidden="true">
-    <circle cx="30" cy="30" r="17" fill="${c.body}"/>
-    <rect x="15" y="20" width="30" height="9" rx="4" fill="${c.lid}"/>
-    <rect x="21" y="31" width="18" height="11" rx="5" fill="${c.glass}"/>
-    <rect x="24" y="34" width="4" height="6" rx="2" fill="${c.eye}"/>
-    <rect x="32" y="34" width="4" height="6" rx="2" fill="${c.eye}"/>
-    <rect x="27" y="12" width="6" height="7" rx="2" fill="${c.wheel}"/>
+    <rect x="17.2" y="8" width="1.6" height="16" rx=".8" fill="#26262A"/>
+    <path d="M18.5 8.5h9v6h-9z" fill="${c.flag || '#F5372B'}"/>
+    <circle cx="20" cy="44" r="5.4" fill="${c.wheel}"/><circle cx="20" cy="44" r="2.1" fill="#5D5D63"/>
+    <circle cx="40" cy="44" r="5.4" fill="${c.wheel}"/><circle cx="40" cy="44" r="2.1" fill="#5D5D63"/>
+    <rect x="28" y="20" width="24" height="24" rx="5" fill="${c.lid}"/>
+    <rect x="10" y="23" width="20" height="21" rx="5" fill="${c.body}"/>
+    <rect x="13" y="30" width="14" height="13" rx="3.5" fill="${c.glass}"/>
+    <rect x="15" y="32.5" width="3" height="8" rx="1.5" fill="${c.eye}"/>
+    <rect x="22" y="32.5" width="3" height="8" rx="1.5" fill="${c.eye}"/>
+    <rect x="16" y="17" width="8" height="7" rx="2" fill="#2B2B2F"/>
   </svg>`;
 }
 

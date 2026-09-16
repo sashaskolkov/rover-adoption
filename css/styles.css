@@ -258,21 +258,63 @@ body.dark-status .statusbar{color:#fff}
 /* ---------- гардероб ---------- */
 .preview{
   position:relative;background:linear-gradient(170deg,#FFF 0%,#F0EEE9 100%);
-  border-radius:24px;padding:14px 16px 16px;margin-bottom:16px;text-align:center;overflow:hidden;
+  border-radius:24px;padding:10px 16px 14px;margin-bottom:14px;text-align:center;overflow:hidden;
   border:1px solid var(--line);
 }
-.preview-glow{position:absolute;left:50%;top:30%;width:250px;height:250px;margin-left:-125px;
-  background:radial-gradient(circle,var(--y) 0%,transparent 66%);opacity:.5}
-.preview-art{position:relative;display:flex;justify-content:center}
+.preview-glow{position:absolute;left:50%;top:26%;width:260px;height:260px;margin-left:-130px;
+  background:radial-gradient(circle,var(--y) 0%,transparent 66%);opacity:.45}
+
+/* сцена с объёмным ровером */
+.stage3d{position:relative;height:250px;margin:0 -6px}
+.stage3d canvas{display:none;width:100%;height:100%;touch-action:pan-y;cursor:grab}
+.stage3d.is3d canvas{display:block}
+.stage3d.is3d canvas:active{cursor:grabbing}
+.preview-art{position:relative;display:flex;justify-content:center;padding-top:14px}
+.preview-art[hidden]{display:none}
 .preview-art svg{width:216px;height:auto;filter:drop-shadow(0 10px 18px rgba(0,0,0,.14));animation:hover 3.6s ease-in-out infinite}
 @keyframes hover{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
-.preview-name{position:relative;font-size:20px;font-weight:800;letter-spacing:-.02em;margin-top:2px}
-.preview-hint{position:relative;font-size:12px;color:var(--ink-3);font-weight:600;margin-top:2px}
+/* подсказку держим под сценой, а не поверх модели */
+.spin-hint{
+  position:relative;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--ink-3);opacity:.6;transition:opacity .4s;pointer-events:none;
+}
+.spin-hint.gone{opacity:0}
+.spin-hint[hidden]{display:none}
 
-.skin-tabs{display:flex;gap:7px;overflow-x:auto;margin:0 -14px 14px;padding:0 14px;scrollbar-width:none}
-.skin-tabs::-webkit-scrollbar{display:none}
-.st{flex:none;padding:8px 15px;border-radius:14px;background:#fff;font-size:13.5px;font-weight:700;color:var(--ink-2);border:1px solid var(--line)}
-.st.is-on{background:var(--ink);color:#fff;border-color:var(--ink)}
+/* «а так меня видят на карте» */
+.map-chip{
+  position:absolute;right:12px;top:12px;width:104px;padding:8px 6px 10px;
+  background:rgba(255,255,255,.82);backdrop-filter:blur(10px);
+  border:1px solid var(--line);border-radius:16px;
+}
+.mc-label{display:block;font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
+.mc-pin{display:flex;flex-direction:column;align-items:center;margin-top:5px}
+.mc-bubble{
+  width:46px;height:46px;border-radius:50%;background:#fff;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 3px 10px rgba(0,0,0,.18),0 0 0 3px #fff;
+}
+.mc-bubble svg{width:36px;height:36px}
+.mc-name{
+  margin-top:-5px;background:var(--y);color:var(--ink);font-size:11px;font-weight:700;
+  padding:2px 8px;border-radius:8px;box-shadow:0 2px 7px rgba(0,0,0,.2);
+}
+
+.preview-meta{position:relative;margin-top:4px}
+.preview-name{font-size:20px;font-weight:800;letter-spacing:-.02em}
+.preview-hint{font-size:12px;color:var(--ink-3);font-weight:600;margin-top:2px;min-height:15px}
+
+/* сегменты «шкаф / магазин» */
+.seg{display:flex;gap:4px;background:#EAE8E3;border-radius:15px;padding:4px;margin-bottom:14px}
+.seg-btn{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:9px 6px;border-radius:11px;font-size:13.5px;font-weight:700;color:var(--ink-2);
+  transition:background .2s,color .2s;
+}
+.seg-btn i{font-style:normal;font-size:11px;font-weight:800;padding:1px 6px;border-radius:7px;
+  background:rgba(0,0,0,.08);color:var(--ink-2)}
+.seg-btn.is-on{background:#fff;color:var(--ink);box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.seg-btn.is-on i{background:var(--y);color:var(--ink)}
 
 .skins{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .skin{
@@ -282,14 +324,21 @@ body.dark-status .statusbar{color:#fff}
 .skin:active{transform:scale(.97)}
 .skin.is-sel{border-color:var(--y)}
 .skin.is-on{border-color:var(--ink)}
-.skin-art{display:flex;justify-content:center;background:var(--bg);border-radius:14px;padding:6px 0 2px;margin-bottom:8px}
+.skin.is-poor .skin-art{opacity:.55}
+.skin.is-poor .p{color:#C6533F}
+.skin-art{display:flex;justify-content:center;align-items:center;background:var(--bg);
+  border-radius:14px;height:96px;overflow:hidden;margin-bottom:8px}
 .skin-art svg{width:104px;height:auto}
+.skin-img{width:100%;height:94px;object-fit:contain;display:block}
 .skin b{display:block;font-size:14px;font-weight:800;letter-spacing:-.01em}
 .skin .p{display:block;font-size:12.5px;font-weight:700;color:var(--ink-3);margin-top:2px}
 .skin .p.own{color:#1DA562}
-.skin .lock{position:absolute;top:14px;right:14px;font-size:13px;opacity:.5}
-.skin .flag{position:absolute;top:12px;left:12px;background:var(--ink);color:#fff;font-size:10px;font-weight:800;
+.skin .flag{position:absolute;top:10px;left:10px;z-index:2;background:var(--ink);color:#fff;font-size:9.5px;font-weight:800;
   padding:3px 7px;border-radius:7px;letter-spacing:.04em;text-transform:uppercase}
+.skin .flag-own{background:#E4F3EA;color:#1DA562}
+.skin .flag-cat{background:rgba(255,255,255,.9);color:var(--ink-3);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.skins-empty{padding:26px 20px;text-align:center;font-size:13.5px;font-weight:600;color:var(--ink-3)}
+.btn-primary.buy{background:var(--ink);color:var(--y);box-shadow:0 6px 20px rgba(33,32,31,.28)}
 
 .equip-bar{
   position:absolute;left:0;right:0;bottom:0;padding:12px 14px 92px;z-index:30;
