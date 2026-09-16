@@ -190,7 +190,7 @@ const R3D = (() => {
     const camera = new THREE.PerspectiveCamera(30, width / height, .1, 100);
     // в миниатюре кадр квадратный — подходим ближе, чтобы ровер не тонул в полях
     if (forThumb) { camera.position.set(3.0, 2.0, 4.1); camera.lookAt(0, .32, 0); }
-    else { camera.position.set(3.3, 2.3, 4.6); camera.lookAt(0, .3, 0); }
+    else { camera.position.set(3.9, 2.7, 5.4); camera.lookAt(0, .28, 0); }
 
     scene.add(new THREE.HemisphereLight(0xffffff, 0xb9b2a6, .72));
     const key = new THREE.DirectionalLight(0xffffff, 1.25);
@@ -301,10 +301,14 @@ const R3D = (() => {
     canvas.addEventListener('touchend', up);
   }
 
+  /* Размер сверяем на каждом кадре. При монтировании канвас ещё может
+     не иметь размеров, и тогда камера получала неверное соотношение
+     сторон — ровера обрезало по краю. */
   function resize() {
     if (!live) return;
     const w = live.canvas.clientWidth, h = live.canvas.clientHeight;
-    if (!w || !h) return;
+    if (!w || !h || (live.w === w && live.h === h)) return;
+    live.w = w; live.h = h;
     live.camera.aspect = w / h;
     live.camera.updateProjectionMatrix();
     live.renderer.setSize(w, h, false);
@@ -313,6 +317,7 @@ const R3D = (() => {
   let t = 0;
   function frame() {
     if (!live || !live.running) return;
+    resize();
     t += 1 / 60;
     if (live.drag === null) {
       live.targetYaw += live.spin / 60;

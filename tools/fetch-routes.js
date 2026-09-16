@@ -32,10 +32,10 @@ const LOOPS = {
   pika:    ['truzh', 'plyush', 'smolensk', 'frunze', 'truzh'],
   kipelov: ['pirogov', 'frunzen', 'hamovval', 'komsomol', 'pirogov'],
   r2d2:    ['komsomol', 'efremov', 'hamovval', 'pirogov', 'komsomol'],
-  bublik:  ['frunze', 'zubov', 'smolensk', 'plyush', 'frunze'],
+  omar:    ['frunze', 'zubov', 'smolensk', 'plyush', 'frunze'],
   shurup:  ['truzh', 'office', 'komsomol', 'efremov', 'truzh'],
-  valera:  ['park', 'frunzen', 'pirogov', 'office', 'park'],
-  zefirka: ['office', 'truzh', 'plyush', 'frunze', 'office']
+  monica:  ['park', 'frunzen', 'pirogov', 'office', 'park'],
+  sauron:  ['office', 'truzh', 'plyush', 'frunze', 'office']
 };
 
 const distM = (a, b) => {

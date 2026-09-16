@@ -15,7 +15,7 @@
 <link rel="apple-touch-icon" href="assets/icon-180.png">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/styles.css?v=4">
 </head>
 <body>
 
@@ -142,6 +142,7 @@
           <div class="scroll">
             <div class="preview">
               <div class="preview-glow"></div>
+              <div class="tune-label">Робот на прокачку</div>
 
               <!-- объёмный ровер; если WebGL нет, сюда падает плоский SVG -->
               <div class="stage3d" id="stage3d">
@@ -193,6 +194,7 @@
                 <span class="pod-kicker">Ведут роверы</span>
                 <h2>Восемь колёс</h2>
                 <p>Подкаст о том, как автономные технологии живут на тротуаре. Без людей в кадре.</p>
+                <div class="pod-award"><b id="podAward">200 ⚙️ за выпуск</b><span>болты тратятся в гардеробе</span></div>
                 <button class="btn-yellow" id="btnPodPlay">▶ Слушать выпуск</button>
               </div>
             </div>
@@ -311,10 +313,10 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
-<script src="js/art.js"></script>
-<script src="js/rover3d.js"></script>
-<script src="js/routes.js"></script>
-<script src="js/data.js"></script>
-<script src="js/app.js"></script>
+<script src="js/art.js?v=4"></script>
+<script src="js/rover3d.js?v=4"></script>
+<script src="js/routes.js?v=4"></script>
+<script src="js/data.js?v=4"></script>
+<script src="js/app.js?v=4"></script>
 </body>
 </html>

@@ -14,7 +14,8 @@ const DEFAULT_STATE = {
   coins: 1240,
   photoDate: null,
   photoIdx: 0,
-  pushSeen: false
+  pushSeen: false,
+  heard: []                        // номера дослушанных выпусков подкаста
 };
 let S = load();
 
@@ -104,8 +105,20 @@ function initRoute(r) {
   r.segLen = [];
   for (let i = 0; i < r.route.length - 1; i++) r.segLen.push(distM(r.route[i], r.route[i + 1]));
   r.total = r.segLen.reduce((a, b) => a + b, 0);
-  r.s = r.t * r.total;
+  r.s = r.nearHome ? nearestToHome(r) : r.t * r.total;
   placeRover(r);
+}
+
+/* Путь до ближайшей к дому точки маршрута — с неё стартуют те роверы,
+   которых нужно видеть рядом сразу при открытии приложения. */
+function nearestToHome(r) {
+  let best = 0, bestD = Infinity, acc = 0;
+  for (let i = 0; i < r.route.length - 1; i++) {
+    const d = distM(HOME, r.route[i]);
+    if (d < bestD) { bestD = d; best = acc; }
+    acc += r.segLen[i];
+  }
+  return best;
 }
 
 function placeRover(r) {
@@ -208,6 +221,8 @@ function renderSheet() {
   const skin = r.mine ? S.skin : r.skin;
   $('#sheetAva').innerHTML = roverSVG(skin, { size: 64, flat: true });
   $('#sheetName').textContent = r.name;
+  // длинные клички вроде «Омар Родригес-Лопес» иначе уходят в две строки
+  $('#sheetName').classList.toggle('long', r.name.length > 13);
   $('#sheetSn').textContent = 'S/N ' + r.sn;
   $('#mapTitleName').textContent = r.name;
   $('#mapTitleLabel').textContent = r.mine ? 'Мой ровер' : 'Ровер · опекун ' + r.owner;
@@ -531,16 +546,33 @@ const ICO_PLAY  = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 3.7c
 
 function renderPodcast() {
   $('#podCover').innerHTML = roverSVG('neon', { size: 118, flat: true, eyes: 'happy' });
-  $('#episodes').innerHTML = EPISODES.map(e => `
-    <button class="ep ${playing && playing.n === e.n ? 'playing' : ''}" data-ep="${e.n}">
+  $('#podAward').textContent = `${EPISODE_AWARD} ⚙️ за выпуск`;
+  $('#episodes').innerHTML = EPISODES.map(e => {
+    const done = S.heard.includes(e.n);
+    return `<button class="ep ${playing && playing.n === e.n ? 'playing' : ''}" data-ep="${e.n}">
       <div class="ep-num">${e.n}</div>
       <div class="ep-body">
         <b>${e.title}</b>
         <p>${e.desc}</p>
         <div class="ep-meta"><span>${e.date}</span><span>·</span><span>${e.dur}</span>
-          ${e.hot ? '<span class="ep-hot">новый</span>' : ''}</div>
+          ${e.hot ? '<span class="ep-hot">новый</span>' : ''}
+          <span class="ep-award ${done ? 'done' : ''}">
+            ${done ? '✓ ' + EPISODE_AWARD + ' ⚙️ получено' : '+' + EPISODE_AWARD + ' ⚙️'}
+          </span></div>
       </div>
-    </button>`).join('');
+    </button>`;
+  }).join('');
+}
+
+/* Выпуск дослушан — начисляем болты один раз */
+function awardEpisode(ep) {
+  if (S.heard.includes(ep.n)) return;
+  S.heard.push(ep.n);
+  S.coins += EPISODE_AWARD;
+  save();
+  haptic([14, 60, 14]);
+  toast(`Выпуск дослушан: +${EPISODE_AWARD} ⚙️ на новые скины`);
+  renderPodcast(); renderProfile(); renderWardrobe();
 }
 
 function durSec(d) { const [m, s] = d.split(':').map(Number); return m * 60 + s; }
@@ -559,16 +591,24 @@ function startTimer() {
   clearInterval(playTimer);
   $('#plToggle').innerHTML = ICO_PAUSE;
   const total = durSec(playing.dur);
+  const ep = playing;
+  // для демо любой выпуск «дослушивается» примерно за 20 секунд
+  const step = total / 220;
   playTimer = setInterval(() => {
-    playPos += 1.6;                       // ускоренная «перемотка» для демо
-    if (playPos >= total) playPos = 0;
+    playPos += step;
+    if (playPos >= total) {
+      playPos = total;
+      clearInterval(playTimer); playTimer = null;
+      $('#plToggle').innerHTML = ICO_PLAY;
+      awardEpisode(ep);
+    }
     $('#plProgress').style.width = (playPos / total * 100) + '%';
     $('#plCur').textContent = fmtSec(playPos);
   }, 90);
 }
 $('#plToggle').onclick = () => {
   if (playTimer) { clearInterval(playTimer); playTimer = null; $('#plToggle').innerHTML = ICO_PLAY; }
-  else startTimer();
+  else { if (playPos >= durSec(playing.dur)) playPos = 0; startTimer(); }
 };
 $('#episodes').addEventListener('click', e => {
   const b = e.target.closest('[data-ep]'); if (!b) return;

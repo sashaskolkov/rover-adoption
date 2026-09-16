@@ -169,7 +169,9 @@ body.dark-status .statusbar{color:#fff}
 }
 .rover-ava svg{width:60px;height:auto}
 .sheet-id{flex:1;min-width:0}
-.sheet-id h2{margin:0;font-size:22px;font-weight:800;letter-spacing:-.02em;line-height:1.15}
+.sheet-id h2{margin:0;font-size:22px;font-weight:800;letter-spacing:-.02em;line-height:1.15;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sheet-id h2.long{font-size:16.5px;letter-spacing:-.03em}
 .sheet-id p{margin:1px 0 0;font-size:13px;color:var(--ink-3);font-weight:500;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* серийный номер — моноширинный, как на шильдике */
@@ -219,7 +221,9 @@ body.dark-status .statusbar{color:#fff}
   padding:11px 14px;text-align:left;border-bottom:1px solid rgba(0,0,0,.05)}
 .nb:last-child{border-bottom:0}
 .nb:active{background:#EDEBE6}
-.nb-id b{display:block;font-size:14px;font-weight:700;letter-spacing:-.01em}
+.nb-id{min-width:0}
+.nb-id b{display:block;font-size:14px;font-weight:700;letter-spacing:-.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .nb-id span{display:block;font-size:11.5px;color:var(--ink-3);font-weight:600;margin-top:1px}
 .nb-d{flex:none;font-size:13px;font-weight:700;color:var(--ink-2);font-variant-numeric:tabular-nums}
 
@@ -264,8 +268,14 @@ body.dark-status .statusbar{color:#fff}
 .preview-glow{position:absolute;left:50%;top:26%;width:260px;height:260px;margin-left:-130px;
   background:radial-gradient(circle,var(--y) 0%,transparent 66%);opacity:.45}
 
+.tune-label{
+  position:absolute;left:14px;top:14px;z-index:2;
+  font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--ink);background:var(--y);padding:4px 9px;border-radius:9px;
+}
+
 /* сцена с объёмным ровером */
-.stage3d{position:relative;height:250px;margin:0 -6px}
+.stage3d{position:relative;height:206px;margin:0 -6px}
 .stage3d canvas{display:none;width:100%;height:100%;touch-action:pan-y;cursor:grab}
 .stage3d.is3d canvas{display:block}
 .stage3d.is3d canvas:active{cursor:grabbing}
@@ -316,9 +326,11 @@ body.dark-status .statusbar{color:#fff}
 .seg-btn.is-on{background:#fff;color:var(--ink);box-shadow:0 2px 6px rgba(0,0,0,.08)}
 .seg-btn.is-on i{background:var(--y);color:var(--ink)}
 
-.skins{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+/* ячейки нарочно компактные: первая строка должна попадать на экран
+   вместе с превью и переключателем полок */
+.skins{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .skin{
-  background:#fff;border-radius:20px;padding:10px 10px 12px;border:2px solid transparent;
+  background:#fff;border-radius:18px;padding:8px 9px 10px;border:2px solid transparent;
   position:relative;transition:transform .15s,border-color .2s;text-align:left;
 }
 .skin:active{transform:scale(.97)}
@@ -327,11 +339,12 @@ body.dark-status .statusbar{color:#fff}
 .skin.is-poor .skin-art{opacity:.55}
 .skin.is-poor .p{color:#C6533F}
 .skin-art{display:flex;justify-content:center;align-items:center;background:var(--bg);
-  border-radius:14px;height:96px;overflow:hidden;margin-bottom:8px}
-.skin-art svg{width:104px;height:auto}
-.skin-img{width:100%;height:94px;object-fit:contain;display:block}
-.skin b{display:block;font-size:14px;font-weight:800;letter-spacing:-.01em}
-.skin .p{display:block;font-size:12.5px;font-weight:700;color:var(--ink-3);margin-top:2px}
+  border-radius:12px;height:74px;overflow:hidden;margin-bottom:6px}
+.skin-art svg{width:88px;height:auto}
+.skin-img{width:100%;height:72px;object-fit:contain;display:block}
+.skin b{display:block;font-size:13px;font-weight:800;letter-spacing:-.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.skin .p{display:block;font-size:11.5px;font-weight:700;color:var(--ink-3);margin-top:1px}
 .skin .p.own{color:#1DA562}
 .skin .flag{position:absolute;top:10px;left:10px;z-index:2;background:var(--ink);color:#fff;font-size:9.5px;font-weight:800;
   padding:3px 7px;border-radius:7px;letter-spacing:.04em;text-transform:uppercase}
@@ -392,6 +405,14 @@ body.dark-status .statusbar{color:#fff}
 .ep-body p{margin:3px 0 5px;font-size:12px;line-height:1.4;color:#8C89A0}
 .ep-meta{font-size:11px;color:#6E6B80;font-weight:600;display:flex;gap:8px;align-items:center}
 .ep-hot{background:var(--y);color:var(--ink);font-size:9.5px;font-weight:800;padding:2px 6px;border-radius:6px;text-transform:uppercase;letter-spacing:.04em}
+.ep-award{margin-left:auto;font-size:10.5px;font-weight:800;color:var(--y);white-space:nowrap}
+.ep-award.done{color:#5FCB86}
+
+/* сколько болтов даёт подкаст */
+.pod-award{display:flex;flex-direction:column;gap:1px;margin:0 0 11px;
+  background:#1E1C2A;border-radius:12px;padding:8px 11px}
+.pod-award b{font-size:13.5px;font-weight:800;color:var(--y);letter-spacing:-.01em}
+.pod-award span{font-size:11px;color:#8C89A0;font-weight:600}
 
 /* ---------- профиль ---------- */
 .prof-card{display:flex;gap:12px;align-items:center;background:#fff;border-radius:24px;padding:14px;border:1px solid var(--line);margin-bottom:14px}
