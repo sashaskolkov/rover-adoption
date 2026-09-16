@@ -18,12 +18,13 @@ const uid = () => 'g' + (++_uid);
    eye   — свет фар
    flag  — флажок на штанге */
 const SKIN_ART = {
-  classic: { lid: '#FFFFFF', lid2: '#E4E1DC', body: '#1C1B1D', glass: '#0E0E10', eye: '#EAF4FF', wheel: '#1A1A1A', flag: '#F5372B' },
+  // чистый белый сливался с белым кружком маркера — держим светло-серый
+  classic: { lid: '#DEDBD4', lid2: '#B9B5AC', body: '#1C1B1D', glass: '#0E0E10', eye: '#EAF4FF', wheel: '#1A1A1A', flag: '#F5372B' },
   courier: { lid: '#FFDB4D', lid2: '#EDB800', body: '#1C1B1D', glass: '#0E0E10', eye: '#FFF4C2', wheel: '#181716', flag: '#F5372B' },
   neon:    { lid: '#241B4D', lid2: '#140F2E', body: '#0E0C1A', glass: '#07070F', eye: '#5BF3FF', wheel: '#0A0A16', flag: '#B14BFF', glow: '#B14BFF' },
-  winter:  { lid: '#EAF4FF', lid2: '#C6DCF2', body: '#232A33', glass: '#10151C', eye: '#D8F1FF', wheel: '#1E242C', flag: '#E8453C' },
+  winter:  { lid: '#CFE2F5', lid2: '#A5C2DE', body: '#232A33', glass: '#10151C', eye: '#D8F1FF', wheel: '#1E242C', flag: '#E8453C' },
   tropic:  { lid: '#19C69B', lid2: '#0E8F6F', body: '#16292A', glass: '#0A1516', eye: '#FFF3B0', wheel: '#14282A', flag: '#FF8FA3' },
-  cosmo:   { lid: '#DDE3EC', lid2: '#B4BECE', body: '#2B303A', glass: '#0F1218', eye: '#9FE6FF', wheel: '#232830', flag: '#4C7DFF' },
+  cosmo:   { lid: '#C4CCDA', lid2: '#9AA5B8', body: '#2B303A', glass: '#0F1218', eye: '#9FE6FF', wheel: '#232830', flag: '#4C7DFF' },
   pixel:   { lid: '#FFD34D', lid2: '#E09400', body: '#241E38', glass: '#100E1C', eye: '#7CFF6B', wheel: '#1D1930', flag: '#6BE86B' },
   royal:   { lid: '#F7D774', lid2: '#C08F14', body: '#241E12', glass: '#14110A', eye: '#FFF0BE', wheel: '#1C1810', flag: '#F7D774' },
   coffee:  { lid: '#8A5A3B', lid2: '#5E3B25', body: '#241811', glass: '#120C08', eye: '#F2D9B8', wheel: '#1E140E', flag: '#C08552' },
@@ -172,7 +173,8 @@ function roverPin(skin) {
     <path d="M18.5 8.5h9v6h-9z" fill="${c.flag || '#F5372B'}"/>
     <circle cx="20" cy="44" r="5.4" fill="${c.wheel}"/><circle cx="20" cy="44" r="2.1" fill="#5D5D63"/>
     <circle cx="40" cy="44" r="5.4" fill="${c.wheel}"/><circle cx="40" cy="44" r="2.1" fill="#5D5D63"/>
-    <rect x="28" y="20" width="24" height="24" rx="5" fill="${c.lid}"/>
+    <rect x="28" y="20" width="24" height="24" rx="5" fill="${c.lid}"
+      stroke="rgba(0,0,0,.22)" stroke-width="1.2"/>
     <rect x="10" y="23" width="20" height="21" rx="5" fill="${c.body}"/>
     <rect x="13" y="30" width="14" height="13" rx="3.5" fill="${c.glass}"/>
     <rect x="15" y="32.5" width="3" height="8" rx="1.5" fill="${c.eye}"/>
