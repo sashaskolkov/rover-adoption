@@ -268,9 +268,10 @@ function refreshSheetMeta() {
     .sort((a, b) => a.d - b.d)
     .forEach(({ el }) => box.appendChild(el));
 
-  // пуш, когда мой ровер подъехал близко (но не в первые секунды показа)
+  // пуш, когда мой ровер подъехал близко (но не в первые секунды показа
+  // и не поверх экрана входа)
   if (r.mine && !S.pushSeen && d < 260 && Date.now() - T0 > 20000
-      && $('.screen.is-active').dataset.screen === 'map') {
+      && $('#onboard').hidden && $('.screen.is-active').dataset.screen === 'map') {
     S.pushSeen = true; save();
     showPush(0);
   }
@@ -643,10 +644,11 @@ $('#demoPhotoReset').onclick = () => { S.photoDate = null; save(); updatePhotoBa
 $('#demoCoins').onclick = () => { S.coins += 1000; save(); renderProfile(); renderWardrobe(); renderSheet(); toast('+1 000 ⚙️ начислено'); };
 $('#demoReset').onclick = () => {
   modal(`<h3 class="mc-title">Сбросить прогресс?</h3>
-    <p class="mc-sub">Скины, болты и кадр дня вернутся к исходным значениям прототипа.</p>
+    <p class="mc-sub">Скины, болты и кадр дня вернутся к исходным значениям прототипа,
+      а показ начнётся заново — с экрана входа.</p>
     <div class="mc-row"><button class="btn-primary ghost" data-close>Отмена</button>
     <button class="btn-primary" id="doReset">Сбросить</button></div>`);
-  $('#doReset').onclick = () => { localStorage.removeItem('rover.v1'); location.reload(); };
+  $('#doReset').onclick = () => { localStorage.clear(); location.reload(); };
 };
 
 /* ============================================================
@@ -707,15 +709,63 @@ renderWardrobe();
 renderProfile();
 updatePhotoBadge();
 
-/* приветственный экран при первом запуске */
-if (!localStorage.getItem('rover.seen')) {
-  localStorage.setItem('rover.seen', '1');
-  setTimeout(() => modal(`
+/* ============================================================
+   ОНБОРДИНГ
+
+   Логин ненастоящий: ничего не спрашиваем и никуда не отправляем —
+   просто показываем, как выглядит вход, и открываем приложение.
+   ============================================================ */
+const ob = $('#onboard');
+let obStep = 'hello';
+
+function obGo(step) {
+  obStep = step;
+  $$('.ob-step').forEach(s => s.classList.toggle('is-on', s.dataset.step === step));
+  ob.className = 'onboard step-' + step;
+  haptic(8);
+}
+
+function obFinish() {
+  localStorage.setItem('rover.auth', '1');
+  ob.classList.add('gone');
+  setTimeout(() => { ob.hidden = true; }, 500);
+  // знакомство показываем один раз, уже поверх карты
+  if (!localStorage.getItem('rover.seen')) {
+    localStorage.setItem('rover.seen', '1');
+    setTimeout(meetSemen, 900);
+  }
+}
+
+function meetSemen() {
+  modal(`
     <div class="mc-art">${roverSVG(S.skin, { size: 180, eyes: 'happy', plate: me().plate })}</div>
     <h3 class="mc-title">Знакомьтесь — Семён</h3>
     <p class="mc-sub">Ровер ${me().plate}, серийный номер ${me().sn}, закреплён за вами.
       Он настоящий и прямо сейчас развозит заказы в Хамовниках со скоростью пешехода.
       Следите за ним на карте, спрашивайте как дела, переодевайте и подавайте сигнал —
       он правда моргнёт фарами.</p>
-    <div class="mc-row"><button class="btn-primary" data-close>Поехали</button></div>`), 700);
+    <div class="mc-row"><button class="btn-primary" data-close>Поехали</button></div>`);
 }
+
+function obStart() {
+  ob.hidden = false;
+  ob.classList.remove('gone');
+  obGo('hello');
+  $('#obArt').innerHTML = roverSVG('classic', { size: 290, plate: me().plate });
+}
+
+$('#demoAuth').onclick = () => { go('map'); closeModal(); obStart(); };
+$('#obInstall').onclick = () => obGo('login');
+$('#obSkip').onclick = () => toast('В прототипе доступен только Яндекс ID');
+$('#obLogin').onclick = () => {
+  obGo('loading');
+  setTimeout(() => {
+    $('#obLoadTitle').textContent = 'Ищем свободного ровера';
+    $('#obLoadText').textContent = 'Хамовники, рядом с вами…';
+  }, 1100);
+  setTimeout(() => obGo('done'), 2100);
+  setTimeout(obFinish, 3500);
+};
+
+if (localStorage.getItem('rover.auth')) ob.hidden = true;
+else obStart();

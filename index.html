@@ -15,7 +15,7 @@
 <link rel="apple-touch-icon" href="assets/icon-180.png">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="css/styles.css?v=4">
+<link rel="stylesheet" href="css/styles.css?v=5">
 </head>
 <body>
 
@@ -251,6 +251,7 @@
 
             <div class="section-title">Демо-режим</div>
             <div class="demo-list">
+              <button class="demo-row" id="demoAuth"><span>Показать экран входа заново</span><i>→</i></button>
               <button class="demo-row" id="demoPush"><span>Прислать пуш «ровер рядом»</span><i>→</i></button>
               <button class="demo-row" id="demoPhotoReset"><span>Сбросить фото дня</span><i>→</i></button>
               <button class="demo-row" id="demoCoins"><span>Начислить 1 000 ⚙️</span><i>→</i></button>
@@ -283,6 +284,52 @@
           </button>
         </nav>
 
+        <!-- ============ ONBOARDING ============ -->
+        <div class="onboard" id="onboard" hidden>
+
+          <div class="ob-step is-on" data-step="hello">
+            <div class="ob-art" id="obArt"></div>
+            <div class="ob-copy">
+              <h1>Заведите себе ровера</h1>
+              <p>Настоящий робот-доставщик, закреплённый лично за вами.
+                 Видно, где едет, можно спросить, как дела, и переодеть.</p>
+            </div>
+            <div class="ob-actions">
+              <button class="btn-primary ob-dark" id="obInstall">Установить Ровера</button>
+              <div class="ob-note">Прототип · роверы и данные вымышленные</div>
+            </div>
+          </div>
+
+          <div class="ob-step" data-step="login">
+            <div class="ob-copy ob-center">
+              <div class="ya-mark">Я</div>
+              <h2>Вход в Ровера</h2>
+              <p>Ровер закрепляется за аккаунтом, чтобы не потерялся.</p>
+            </div>
+            <div class="ob-actions">
+              <button class="btn-yaid" id="obLogin"><span class="ya">Я</span>Войти с Яндекс ID</button>
+              <button class="ob-alt" id="obSkip">Другой способ входа</button>
+            </div>
+          </div>
+
+          <div class="ob-step" data-step="loading">
+            <div class="ob-copy ob-center">
+              <div class="spinner"></div>
+              <h2 id="obLoadTitle">Проверяем Яндекс ID</h2>
+              <p id="obLoadText">Секунду, закрепляем за вами ровера…</p>
+            </div>
+          </div>
+
+          <div class="ob-step" data-step="done">
+            <div class="ob-copy ob-center">
+              <div class="ob-ava">С</div>
+              <h2>Здравствуйте, Саша</h2>
+              <p>Ровер A-1856 теперь ваш.</p>
+              <div class="ob-check">✓</div>
+            </div>
+          </div>
+        </div>
+
         <!-- ============ OVERLAYS ============ -->
         <div class="push" id="push">
           <div class="push-ico" id="pushIco"></div>
@@ -313,10 +360,10 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
-<script src="js/art.js?v=4"></script>
-<script src="js/rover3d.js?v=4"></script>
-<script src="js/routes.js?v=4"></script>
-<script src="js/data.js?v=4"></script>
-<script src="js/app.js?v=4"></script>
+<script src="js/art.js?v=5"></script>
+<script src="js/rover3d.js?v=5"></script>
+<script src="js/routes.js?v=5"></script>
+<script src="js/data.js?v=5"></script>
+<script src="js/app.js?v=5"></script>
 </body>
 </html>
