@@ -28,14 +28,15 @@ const P = {
 };
 
 const LOOPS = {
-  semen:   ['office', 'frunze', 'zubov', 'park', 'pirogov', 'office'],
+  sanek:   ['office', 'frunze', 'zubov', 'park', 'pirogov', 'office'],
   pika:    ['truzh', 'plyush', 'smolensk', 'frunze', 'truzh'],
   kipelov: ['pirogov', 'frunzen', 'hamovval', 'komsomol', 'pirogov'],
   r2d2:    ['komsomol', 'efremov', 'hamovval', 'pirogov', 'komsomol'],
   omar:    ['frunze', 'zubov', 'smolensk', 'plyush', 'frunze'],
   shurup:  ['truzh', 'office', 'komsomol', 'efremov', 'truzh'],
   monica:  ['park', 'frunzen', 'pirogov', 'office', 'park'],
-  sauron:  ['office', 'truzh', 'plyush', 'frunze', 'office']
+  sauron:  ['office', 'truzh', 'plyush', 'frunze', 'office'],
+  sofia:   ['zubov', 'park', 'pirogov', 'office', 'frunze', 'zubov']
 };
 
 const distM = (a, b) => {

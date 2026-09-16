@@ -13,17 +13,18 @@ const HOME = [55.73390, 37.58870];   // «вы здесь»
    batt     — заряд в момент запуска приложения, дальше садится сам.
    t        — стартовое положение на маршруте, доля круга (0…1).
    nearHome — стартовать в ближайшей к дому точке маршрута, игнорируя t:
-              Семён и его два соседа должны быть рядом сразу при запуске.
+              Санёк и его два соседа должны быть рядом сразу при запуске.
    sn       — серийный номер: поколение, страна, номер партии. */
 const ROVERS = [
-  { id:'semen',   name:'Семён',     plate:'A-1856', sn:'4RU-018562', owner:'вы',     mine:true,  skin:'classic', kmh:5.2, batt:78, nearHome:true },
+  { id:'sanek',   name:'Санёк',     plate:'A-1856', sn:'4RU-018562', owner:'вы',     mine:true,  skin:'classic', kmh:5.2, batt:78, nearHome:true },
   { id:'pika',    name:'Пика Пика', plate:'A-2047', sn:'4RU-020147', owner:'Настя',  mine:false, skin:'courier', kmh:4.8, batt:64, nearHome:true },
   { id:'kipelov', name:'Кипелов',   plate:'A-0931', sn:'3RU-009318', owner:'Артём',  mine:false, skin:'neon',    kmh:5.6, batt:91, nearHome:true },
   { id:'r2d2',    name:'R2D2',      plate:'A-2100', sn:'4RU-021002', owner:'Женя',   mine:false, skin:'cosmo',   kmh:4.4, batt:47, t:0.70 },
   { id:'omar',    name:'Омар Родригес-Лопес', plate:'A-1774', sn:'4RU-017745', owner:'Марина', mine:false, skin:'coffee', kmh:6.0, batt:83, t:0.35 },
   { id:'shurup',  name:'Шуруп',     plate:'A-0826', sn:'3RU-008260', owner:'Костя',  mine:false, skin:'rescue',  kmh:5.0, batt:36, t:0.85 },
   { id:'monica',  name:'Моника',    plate:'A-1943', sn:'4RU-019436', owner:'Лера',   mine:false, skin:'pixel',   kmh:5.8, batt:72, t:0.05 },
-  { id:'sauron',  name:'Саурон',    plate:'A-2088', sn:'4RU-020881', owner:'Даша',   mine:false, skin:'winter',  kmh:4.6, batt:58, t:0.45 }
+  { id:'sauron',  name:'Саурон',    plate:'A-2088', sn:'4RU-020881', owner:'Даша',   mine:false, skin:'winter',  kmh:4.6, batt:58, t:0.45 },
+  { id:'sofia',   name:'София',     plate:'A-2231', sn:'4RU-022310', owner:'Илья',   mine:false, skin:'royal',   kmh:5.4, batt:69, t:0.60 }
 ];
 
 /* Ответы на «Как дела?» */

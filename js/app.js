@@ -29,7 +29,7 @@ function save() { try { localStorage.setItem('rover.v1', JSON.stringify(S)); } c
 
 const me = () => ROVERS.find(r => r.mine);
 const byId = id => ROVERS.find(r => r.id === id);
-let selectedId = 'semen';
+let selectedId = 'sanek';
 let selectedSkin = S.skin;
 let skinCat = 'owned';             // «Мой шкаф» или «Магазин»
 
@@ -358,7 +358,7 @@ function openPhoto() {
     modal(`
       <div class="mc-art">${roverSVG(S.skin, { size: 180, eyes: 'sleepy' })}</div>
       <h3 class="mc-title">Кадр на сегодня уже сделан</h3>
-      <p class="mc-sub">Семён снимает один кадр в сутки — чтобы не расходовать батарею на позёрство.
+      <p class="mc-sub">Санёк снимает один кадр в сутки — чтобы не расходовать батарею на позёрство.
         Следующий через ${h} ч ${m} мин.</p>
       <div class="mc-row">
         <button class="btn-primary ghost" data-close>Понятно</button>
@@ -379,7 +379,7 @@ function showShot(idx, fresh) {
   const stamp = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} · ${me().plate}`;
   modal(`
     <h3 class="mc-title">${fresh ? 'Кадр дня' : 'Последний кадр'}</h3>
-    <p class="mc-sub">Снято камерой Семёна, ${now.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</p>
+    <p class="mc-sub">Снято камерой Санька, ${now.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</p>
     <div class="shot">${eyeShotSVG(idx, stamp)}</div>
     <p class="shot-cap">«${EYE_SCENES[idx % EYE_SCENES.length].cap}»</p>
     <div class="mc-row">
@@ -464,7 +464,7 @@ function renderWardrobe() {
   empty.hidden = list.length > 0;
   empty.textContent = skinCat === 'owned'
     ? 'В шкафу пока только заводская ливрея.'
-    : 'Вы скупили весь гардероб. Семён доволен.';
+    : 'Вы скупили весь гардероб. Санёк доволен.';
 
   const sk = SKINS.find(s => s.id === selectedSkin);
   if (use3D) R3D.setSkin(selectedSkin);
@@ -481,8 +481,8 @@ function renderWardrobe() {
   const own = S.owned.includes(selectedSkin);
   const btn = $('#btnEquip');
   btn.classList.toggle('buy', !own);
-  if (S.skin === selectedSkin) { btn.textContent = 'Уже на Семёне'; btn.disabled = true; }
-  else if (own) { btn.textContent = 'Надеть на Семёна'; btn.disabled = false; }
+  if (S.skin === selectedSkin) { btn.textContent = 'Уже на Саньке'; btn.disabled = true; }
+  else if (own) { btn.textContent = 'Надеть на Санька'; btn.disabled = false; }
   else { btn.textContent = `Купить за ${fmtNum(sk.price)} ⚙️`; btn.disabled = false; }
 
   $('#walletVal').textContent = fmtNum(S.coins);
@@ -508,7 +508,7 @@ $('#btnEquip').onclick = () => {
   if (S.owned.includes(sk.id)) { equip(sk); return; }
   if (S.coins < sk.price) {
     modal(`<h3 class="mc-title">Не хватает ⚙️</h3>
-      <p class="mc-sub">Нужно ещё ${fmtNum(sk.price - S.coins)} болтов. Их начисляют за заказы Семёна,
+      <p class="mc-sub">Нужно ещё ${fmtNum(sk.price - S.coins)} болтов. Их начисляют за заказы Санька,
       серии дней и достижения.</p>
       <div class="mc-row"><button class="btn-primary" data-close>Ладно, накоплю</button></div>`);
     return;
@@ -534,7 +534,7 @@ function equip(sk, bought) {
   if (bought) skinCat = 'owned';          // купленное сразу показываем в шкафу
   if (use3D) R3D.setSkin(sk.id, true);
   renderWardrobe(); repaintMarkers(); renderSheet(); renderProfile();
-  toast(bought ? `«${sk.name}» куплен и надет на Семёна` : `Семён переоделся в «${sk.name}»`);
+  toast(bought ? `«${sk.name}» куплен и надет на Санька` : `Санёк переоделся в «${sk.name}»`);
 }
 
 /* ============================================================
@@ -670,7 +670,7 @@ function showPush(i) {
 }
 $('#push').onclick = () => {
   $('#push').classList.remove('show');
-  go('map'); selectRover('semen'); setSheet(true);
+  go('map'); selectRover('sanek'); setSheet(true);
 };
 $('#btnBell').onclick = () => showPush(Math.floor(Math.random() * PUSHES.length));
 
@@ -696,7 +696,7 @@ document.addEventListener('click', e => {
   const b = e.target.closest('[data-goto]'); if (b) go(b.dataset.goto);
   const c = e.target.closest('[data-rv]'); if (c && c.dataset.rv) selectRover(c.dataset.rv);
 });
-$('#mapTitle').onclick = () => { if (selectedId !== 'semen') selectRover('semen'); };
+$('#mapTitle').onclick = () => { if (selectedId !== 'sanek') selectRover('sanek'); };
 $('#btnLocate').onclick = () => { map.panTo(HOME, { animate: true }); toast('Вы здесь'); };
 $('#btnLayers').onclick = () => toast('В прототипе один слой карты');
 
@@ -739,7 +739,7 @@ function obFinish() {
 function meetSemen() {
   modal(`
     <div class="mc-art">${roverSVG(S.skin, { size: 180, eyes: 'happy', plate: me().plate })}</div>
-    <h3 class="mc-title">Знакомьтесь — Семён</h3>
+    <h3 class="mc-title">Знакомьтесь — Санёк</h3>
     <p class="mc-sub">Ровер ${me().plate}, серийный номер ${me().sn}, закреплён за вами.
       Он настоящий и прямо сейчас развозит заказы в Хамовниках со скоростью пешехода.
       Следите за ним на карте, спрашивайте как дела, переодевайте и подавайте сигнал —
